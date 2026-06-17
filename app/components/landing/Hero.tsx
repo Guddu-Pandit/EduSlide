@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight, BarChart3, Play, Sparkles, Upload } from "lucide-react";
 
 export default function Hero() {
@@ -19,10 +20,13 @@ export default function Hero() {
       </p>
 
       <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-        <button className="flex items-center gap-2 rounded-xl bg-brand px-7 py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-brand-hover">
+        <Link
+          href="/signup"
+          className="flex items-center gap-2 rounded-xl bg-brand px-7 py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-brand-hover"
+        >
           <ArrowRight className="h-4 w-4" />
           Try it free
-        </button>
+        </Link>
         <button className="flex items-center gap-2 rounded-xl border border-border-strong px-7 py-3.5 text-[15px] text-text-strong transition-colors hover:bg-surface-2">
           <Play className="h-4 w-4" />
           Watch demo

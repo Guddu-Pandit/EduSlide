@@ -1,3 +1,4 @@
+import Link from "next/link";
 import ScrollLink from "./ScrollLink";
 
 const links = [
@@ -27,9 +28,20 @@ export default function Navbar() {
           </li>
         ))}
       </ul>
-      <button className="rounded-lg bg-brand px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-hover">
-        Start free trial
-      </button>
+      <div className="flex items-center gap-5">
+        <Link
+          href="/login"
+          className="hidden text-sm text-text-muted transition-colors hover:text-text-strong sm:inline"
+        >
+          Sign in
+        </Link>
+        <Link
+          href="/signup"
+          className="rounded-lg bg-brand px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-hover"
+        >
+          Start free trial
+        </Link>
+      </div>
     </nav>
   );
 }
