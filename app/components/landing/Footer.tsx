@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Globe, Mail, MessageCircle } from "lucide-react";
 import ScrollLink from "./ScrollLink";
 
@@ -89,9 +90,12 @@ export default function Footer() {
             <p className="mb-4 text-sm leading-relaxed text-text-muted">
               Free for your first 10 decks. No credit card required.
             </p>
-            <button className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-hover">
+            <Link
+              href="/signup"
+              className="inline-block rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-hover"
+            >
               Start free trial
-            </button>
+            </Link>
           </div>
         </div>
 
