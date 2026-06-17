@@ -28,6 +28,9 @@ export async function signup(formData: FormData) {
     password: formData.get("password") as string,
     options: {
       emailRedirectTo: `${origin}/auth/callback`,
+      data: {
+        full_name: formData.get("name") as string,
+      },
     },
   });
 

@@ -6,13 +6,19 @@ export const metadata: Metadata = {
   title: "Create account · EduSlide",
 };
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   return (
     <AuthLayout
       title="Create your account"
       subtitle="Turn documents into polished slides — free, no credit card required."
     >
-      <SignupForm />
+      <SignupForm error={error} />
     </AuthLayout>
   );
 }
