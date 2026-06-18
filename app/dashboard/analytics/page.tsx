@@ -1,20 +1,15 @@
 import { BarChart3, Clock, Presentation as PresentationIcon, Sparkles } from "lucide-react";
-import { createClient } from "@/app/lib/supabase/server";
-import { getDocuments, getPresentations } from "@/app/lib/dashboard/queries";
+import { createClient, getCachedUser } from "@/app/lib/supabase/server";
+import { getDashboardData } from "@/app/lib/dashboard/queries";
 import { templateName } from "@/app/lib/dashboard/templates";
 import StatCard from "@/app/components/dashboard/StatCard";
 
 export default async function AnalyticsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
+  const supabase = await createClient();
 
-  const [presentations, documents] = await Promise.all([
-    getPresentations(supabase, user.id),
-    getDocuments(supabase, user.id),
-  ]);
+  const { documents, presentations } = await getDashboardData(supabase, user.id);
 
   const totalSlides = presentations.reduce((sum, p) => sum + p.slide_count, 0);
 

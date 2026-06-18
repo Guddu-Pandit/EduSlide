@@ -1,14 +1,12 @@
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getProfile } from "@/app/lib/dashboard/queries";
 import { setDefaultTemplate } from "@/app/lib/dashboard/actions";
 import { TEMPLATES } from "@/app/lib/dashboard/templates";
 
 export default async function TemplatesPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
+  const supabase = await createClient();
 
   const profile = await getProfile(supabase, user.id);
 

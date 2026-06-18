@@ -9,12 +9,12 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import {
-  getDashboardStats,
-  getPresentations,
+  computeDashboardStats,
+  computeRecentActivity,
+  getDashboardData,
   getProfile,
-  getRecentActivity,
 } from "@/app/lib/dashboard/queries";
 import { PLAN_LIMITS } from "@/app/lib/dashboard/plan";
 import { formatBytes, formatDate, formatRelativeTime } from "@/app/lib/dashboard/format";
@@ -31,18 +31,18 @@ const ACTIVITY_STYLES = {
 } as const;
 
 export default async function OverviewPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
+  const supabase = await createClient();
 
-  const [stats, recentPresentations, activity, profile] = await Promise.all([
-    getDashboardStats(supabase, user.id),
-    getPresentations(supabase, user.id),
-    getRecentActivity(supabase, user.id),
+  const [{ documents, presentations }, profile] = await Promise.all([
+    getDashboardData(supabase, user.id),
     getProfile(supabase, user.id),
   ]);
+
+  const stats = computeDashboardStats(documents, presentations);
+  const activity = computeRecentActivity(documents, presentations);
+  const recentPresentations = presentations;
 
   const limits = PLAN_LIMITS[profile.plan];
   const presLimitLabel = limits.presentationsPerMonth

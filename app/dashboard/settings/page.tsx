@@ -1,4 +1,4 @@
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getProfile } from "@/app/lib/dashboard/queries";
 import { sendPasswordReset, updatePreferences, updateProfile } from "@/app/lib/dashboard/actions";
 import { TEMPLATES } from "@/app/lib/dashboard/templates";
@@ -14,11 +14,9 @@ function Toggle({ name, defaultChecked }: { name: string; defaultChecked: boolea
 }
 
 export default async function SettingsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
+  const supabase = await createClient();
 
   const profile = await getProfile(supabase, user.id);
 

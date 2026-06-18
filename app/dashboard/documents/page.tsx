@@ -1,17 +1,15 @@
 import Link from "next/link";
 import { Files, Sparkles, Trash2 } from "lucide-react";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getDocuments, getProfile } from "@/app/lib/dashboard/queries";
 import { convertDocument, deleteDocument } from "@/app/lib/dashboard/actions";
 import { formatBytes, formatDate } from "@/app/lib/dashboard/format";
 import FileIcon from "@/app/components/dashboard/FileIcon";
 
 export default async function DocumentsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
+  const supabase = await createClient();
 
   const [documents, profile] = await Promise.all([
     getDocuments(supabase, user.id),

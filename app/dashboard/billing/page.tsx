@@ -1,15 +1,13 @@
 import { Crown } from "lucide-react";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getDashboardStats, getProfile } from "@/app/lib/dashboard/queries";
 import { PLAN_LIMITS } from "@/app/lib/dashboard/plan";
 import { formatBytes } from "@/app/lib/dashboard/format";
 
 export default async function BillingPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
+  const supabase = await createClient();
 
   const [profile, stats] = await Promise.all([
     getProfile(supabase, user.id),

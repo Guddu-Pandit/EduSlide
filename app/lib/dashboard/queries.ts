@@ -21,11 +21,22 @@ export async function getProfile(
   return data as ProfileRow;
 }
 
-export async function getDocuments(
+export interface DashboardData {
+  documents: DocumentWithCount[];
+  presentations: PresentationRow[];
+}
+
+/**
+ * Fetches documents and presentations together in a single round-trip pair
+ * (one query each, run in parallel) so callers that need both — or derive
+ * stats/activity from both — never issue duplicate requests for the same
+ * tables.
+ */
+export async function getDashboardData(
   supabase: SupabaseClient,
   userId: string,
-): Promise<DocumentWithCount[]> {
-  const [{ data: documents, error: docsError }, { data: presentations }] =
+): Promise<DashboardData> {
+  const [{ data: documents, error: docsError }, { data: presentations, error: presError }] =
     await Promise.all([
       supabase
         .from("documents")
@@ -34,22 +45,33 @@ export async function getDocuments(
         .order("created_at", { ascending: false }),
       supabase
         .from("presentations")
-        .select("document_id")
+        .select("*")
         .eq("user_id", userId)
-        .not("document_id", "is", null),
+        .order("created_at", { ascending: false }),
     ]);
 
   if (docsError) throw new Error("Could not load documents");
+  if (presError) throw new Error("Could not load presentations");
 
   const counts = new Map<string, number>();
-  for (const p of (presentations ?? []) as { document_id: string }[]) {
-    counts.set(p.document_id, (counts.get(p.document_id) ?? 0) + 1);
+  for (const p of (presentations ?? []) as PresentationRow[]) {
+    if (p.document_id) counts.set(p.document_id, (counts.get(p.document_id) ?? 0) + 1);
   }
 
-  return ((documents ?? []) as DocumentRow[]).map((d) => ({
+  const documentsWithCount = ((documents ?? []) as DocumentRow[]).map((d) => ({
     ...d,
     presentationCount: counts.get(d.id) ?? 0,
   }));
+
+  return { documents: documentsWithCount, presentations: (presentations ?? []) as PresentationRow[] };
+}
+
+export async function getDocuments(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<DocumentWithCount[]> {
+  const { documents } = await getDashboardData(supabase, userId);
+  return documents;
 }
 
 export async function getPresentations(
@@ -80,15 +102,10 @@ export interface DashboardStats {
   storageBytes: number;
 }
 
-export async function getDashboardStats(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<DashboardStats> {
-  const [documents, presentations] = await Promise.all([
-    getDocuments(supabase, userId),
-    getPresentations(supabase, userId),
-  ]);
-
+export function computeDashboardStats(
+  documents: DocumentWithCount[],
+  presentations: PresentationRow[],
+): DashboardStats {
   const now = new Date();
   const presentationsThisMonth = presentations.filter((p) => {
     const d = new Date(p.created_at);
@@ -105,20 +122,23 @@ export async function getDashboardStats(
   };
 }
 
+export async function getDashboardStats(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<DashboardStats> {
+  const { documents, presentations } = await getDashboardData(supabase, userId);
+  return computeDashboardStats(documents, presentations);
+}
+
 export type ActivityItem =
   | { kind: "document_uploaded"; id: string; name: string; at: string }
   | { kind: "presentation_created"; id: string; name: string; status: PresentationStatus; at: string };
 
-export async function getRecentActivity(
-  supabase: SupabaseClient,
-  userId: string,
+export function computeRecentActivity(
+  documents: DocumentWithCount[],
+  presentations: PresentationRow[],
   limit = 6,
-): Promise<ActivityItem[]> {
-  const [documents, presentations] = await Promise.all([
-    getDocuments(supabase, userId),
-    getPresentations(supabase, userId),
-  ]);
-
+): ActivityItem[] {
   const items: ActivityItem[] = [
     ...documents.map((d) => ({
       kind: "document_uploaded" as const,

@@ -1,18 +1,16 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getPresentations, getProfile } from "@/app/lib/dashboard/queries";
 import Sidebar from "@/app/components/dashboard/Sidebar";
 import Topbar from "@/app/components/dashboard/Topbar";
 import Toast from "@/app/components/dashboard/Toast";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getCachedUser();
   if (!user) redirect("/login");
+
+  const supabase = await createClient();
 
   const [profile, presentations] = await Promise.all([
     getProfile(supabase, user.id),

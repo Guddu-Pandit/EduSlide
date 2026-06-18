@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Presentation as PresentationIcon, RefreshCw, Trash2 } from "lucide-react";
-import { createClient } from "@/app/lib/supabase/server";
+import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getPresentations } from "@/app/lib/dashboard/queries";
 import { deletePresentation, retryPresentation } from "@/app/lib/dashboard/actions";
 import { formatDate } from "@/app/lib/dashboard/format";
@@ -24,11 +24,9 @@ export default async function PresentationsPage({
   const { status, q } = await searchParams;
   const activeStatus = (status as PresentationStatus) || undefined;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
+  const supabase = await createClient();
 
   const presentations = await getPresentations(supabase, user.id, { status: activeStatus, q });
 
