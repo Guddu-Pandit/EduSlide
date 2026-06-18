@@ -1,0 +1,39 @@
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { createClient } from "@/app/lib/supabase/server";
+import { getPresentations, getProfile } from "@/app/lib/dashboard/queries";
+import Sidebar from "@/app/components/dashboard/Sidebar";
+import Topbar from "@/app/components/dashboard/Topbar";
+import Toast from "@/app/components/dashboard/Toast";
+
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const [profile, presentations] = await Promise.all([
+    getProfile(supabase, user.id),
+    getPresentations(supabase, user.id),
+  ]);
+
+  return (
+    <div className="flex h-screen flex-1 overflow-hidden bg-surface-3">
+      <Sidebar
+        fullName={profile.full_name}
+        email={user.email}
+        plan={profile.plan}
+        presentationsCount={presentations.length}
+      />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Topbar />
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
+      <Suspense>
+        <Toast />
+      </Suspense>
+    </div>
+  );
+}
