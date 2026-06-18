@@ -20,16 +20,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ]);
 
   return (
-    <div className="flex h-screen flex-1 overflow-hidden bg-surface-3">
+    <div className="fixed inset-0 flex overflow-hidden bg-surface-3">
       <Sidebar
         fullName={profile.full_name}
         email={user.email}
         plan={profile.plan}
         presentationsCount={presentations.length}
       />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>
       <Suspense>
         <Toast />
