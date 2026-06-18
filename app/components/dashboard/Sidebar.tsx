@@ -91,7 +91,7 @@ export default function Sidebar({
   return (
     <aside className="flex w-[220px] flex-shrink-0 flex-col overflow-y-auto border-r border-border-soft bg-surface-1">
       <div className="border-b border-border-soft px-4 pb-3 pt-[18px]">
-        <Link href="/" className="flex items-center gap-2.5 font-display text-base font-bold tracking-tight text-text-strong">
+        <Link href="/dashboard" className="flex items-center gap-2.5 font-display text-base font-bold tracking-tight text-text-strong">
           <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[7px] bg-brand text-sm font-bold text-white">
             E
           </span>
