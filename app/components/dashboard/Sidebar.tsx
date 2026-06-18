@@ -10,10 +10,12 @@ import {
   HelpCircle,
   LayoutDashboard,
   LayoutTemplate,
+  LogOut,
   Presentation,
   Settings,
   Upload,
 } from "lucide-react";
+import { logout } from "@/app/lib/auth-actions";
 import type { Plan } from "@/app/lib/dashboard/plan";
 
 const mainItems = [
@@ -139,6 +141,15 @@ export default function Sidebar({
           </span>
           <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-text-muted" />
         </Link>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="mt-1 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface-3 hover:text-text-strong"
+          >
+            <LogOut className="h-[17px] w-[17px] flex-shrink-0" />
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   );

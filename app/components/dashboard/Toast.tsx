@@ -9,24 +9,32 @@ export default function Toast() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const message = searchParams.get("toast");
-  const [visible, setVisible] = useState(false);
+
+  const [shownMessage, setShownMessage] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [visible, setVisible] = useState(false);
+
+  if (message && message !== shownMessage) {
+    setShownMessage(message);
+    setText(message);
+    setVisible(true);
+  }
 
   useEffect(() => {
     if (!message) return;
-
-    setText(message);
-    setVisible(true);
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete("toast");
     const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(next, { scroll: false });
-
-    const timer = setTimeout(() => setVisible(false), 3200);
-    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(() => setVisible(false), 3200);
+    return () => clearTimeout(timer);
+  }, [visible]);
 
   return (
     <div
