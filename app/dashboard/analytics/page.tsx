@@ -1,15 +1,29 @@
+"use client";
+
 import { BarChart3, Clock, Presentation as PresentationIcon, Sparkles } from "lucide-react";
-import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getDashboardData } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { templateName } from "@/app/lib/dashboard/templates";
 import StatCard from "@/app/components/dashboard/StatCard";
+import { CardSkeleton, StatGridSkeleton } from "@/app/components/dashboard/Skeleton";
 
-export default async function AnalyticsPage() {
-  const user = await getCachedUser();
-  if (!user) return null;
-  const supabase = await createClient();
+export default function AnalyticsPage() {
+  const { data, loading } = useDashboardQuery((supabase, userId) => getDashboardData(supabase, userId));
 
-  const { documents, presentations } = await getDashboardData(supabase, user.id);
+  if (loading || !data) {
+    return (
+      <div className="px-7 py-6">
+        <StatGridSkeleton />
+        <div className="mb-4 grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <CardSkeleton className="h-32" />
+      </div>
+    );
+  }
+
+  const { documents, presentations } = data;
 
   const totalSlides = presentations.reduce((sum, p) => sum + p.slide_count, 0);
 

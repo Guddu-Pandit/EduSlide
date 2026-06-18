@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -9,18 +11,19 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
-import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import {
   computeDashboardStats,
   computeRecentActivity,
   getDashboardData,
   getProfile,
 } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { PLAN_LIMITS } from "@/app/lib/dashboard/plan";
 import { formatBytes, formatDate, formatRelativeTime } from "@/app/lib/dashboard/format";
 import { templateName } from "@/app/lib/dashboard/templates";
 import StatCard from "@/app/components/dashboard/StatCard";
 import StatusPill from "@/app/components/dashboard/StatusPill";
+import { CardSkeleton, StatGridSkeleton, TwoColSkeleton } from "@/app/components/dashboard/Skeleton";
 
 const ACTIVITY_STYLES = {
   document_uploaded: { className: "bg-amber-50 text-amber-700", icon: Upload },
@@ -30,20 +33,31 @@ const ACTIVITY_STYLES = {
   error: { className: "bg-red-50 text-red-700", icon: Sparkles },
 } as const;
 
-export default async function OverviewPage() {
-  const user = await getCachedUser();
-  if (!user) return null;
-  const supabase = await createClient();
+export default function OverviewPage() {
+  const { data, loading } = useDashboardQuery(async (supabase, userId) => {
+    const [{ documents, presentations }, profile] = await Promise.all([
+      getDashboardData(supabase, userId),
+      getProfile(supabase, userId),
+    ]);
+    return {
+      stats: computeDashboardStats(documents, presentations),
+      activity: computeRecentActivity(documents, presentations),
+      presentations,
+      profile,
+    };
+  });
 
-  const [{ documents, presentations }, profile] = await Promise.all([
-    getDashboardData(supabase, user.id),
-    getProfile(supabase, user.id),
-  ]);
+  if (loading || !data) {
+    return (
+      <div className="px-7 py-6">
+        <StatGridSkeleton />
+        <TwoColSkeleton />
+        <CardSkeleton className="h-32" />
+      </div>
+    );
+  }
 
-  const stats = computeDashboardStats(documents, presentations);
-  const activity = computeRecentActivity(documents, presentations);
-  const recentPresentations = presentations;
-
+  const { stats, activity, presentations, profile } = data;
   const limits = PLAN_LIMITS[profile.plan];
   const presLimitLabel = limits.presentationsPerMonth
     ? `${stats.presentationsThisMonth} / ${limits.presentationsPerMonth}`
@@ -93,7 +107,7 @@ export default async function OverviewPage() {
               View all →
             </Link>
           </div>
-          {recentPresentations.length === 0 ? (
+          {presentations.length === 0 ? (
             <EmptyRow />
           ) : (
             <table className="w-full text-[13px]">
@@ -105,7 +119,7 @@ export default async function OverviewPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentPresentations.slice(0, 4).map((p) => (
+                {presentations.slice(0, 4).map((p) => (
                   <tr key={p.id} className="border-b border-border-soft last:border-none">
                     <td className="py-3">
                       <div className="flex items-center gap-2.5">

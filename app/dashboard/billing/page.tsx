@@ -1,19 +1,30 @@
+"use client";
+
 import { Crown } from "lucide-react";
-import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getDashboardStats, getProfile } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { PLAN_LIMITS } from "@/app/lib/dashboard/plan";
 import { formatBytes } from "@/app/lib/dashboard/format";
+import { CardSkeleton } from "@/app/components/dashboard/Skeleton";
 
-export default async function BillingPage() {
-  const user = await getCachedUser();
-  if (!user) return null;
-  const supabase = await createClient();
+export default function BillingPage() {
+  const { data, loading } = useDashboardQuery(async (supabase, userId) => {
+    const [profile, stats] = await Promise.all([
+      getProfile(supabase, userId),
+      getDashboardStats(supabase, userId),
+    ]);
+    return { profile, stats };
+  });
 
-  const [profile, stats] = await Promise.all([
-    getProfile(supabase, user.id),
-    getDashboardStats(supabase, user.id),
-  ]);
+  if (loading || !data) {
+    return (
+      <div className="px-7 py-6">
+        <CardSkeleton className="h-72" />
+      </div>
+    );
+  }
 
+  const { profile, stats } = data;
   const limits = PLAN_LIMITS[profile.plan];
   const presLabel = limits.presentationsPerMonth
     ? `${stats.presentationsThisMonth} / ${limits.presentationsPerMonth}`

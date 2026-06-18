@@ -1,20 +1,32 @@
+"use client";
+
 import Link from "next/link";
 import { Files, Sparkles, Trash2 } from "lucide-react";
-import { createClient, getCachedUser } from "@/app/lib/supabase/server";
 import { getDocuments, getProfile } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { convertDocument, deleteDocument } from "@/app/lib/dashboard/actions";
 import { formatBytes, formatDate } from "@/app/lib/dashboard/format";
 import FileIcon from "@/app/components/dashboard/FileIcon";
+import { TableSkeleton } from "@/app/components/dashboard/Skeleton";
 
-export default async function DocumentsPage() {
-  const user = await getCachedUser();
-  if (!user) return null;
-  const supabase = await createClient();
+export default function DocumentsPage() {
+  const { data, loading } = useDashboardQuery(async (supabase, userId) => {
+    const [documents, profile] = await Promise.all([
+      getDocuments(supabase, userId),
+      getProfile(supabase, userId),
+    ]);
+    return { documents, profile };
+  });
 
-  const [documents, profile] = await Promise.all([
-    getDocuments(supabase, user.id),
-    getProfile(supabase, user.id),
-  ]);
+  if (loading || !data) {
+    return (
+      <div className="px-7 py-6">
+        <TableSkeleton />
+      </div>
+    );
+  }
+
+  const { documents, profile } = data;
 
   return (
     <div className="px-7 py-6">

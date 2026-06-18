@@ -1,7 +1,10 @@
-import { createClient, getCachedUser } from "@/app/lib/supabase/server";
+"use client";
+
 import { getProfile } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { sendPasswordReset, updatePreferences, updateProfile } from "@/app/lib/dashboard/actions";
 import { TEMPLATES } from "@/app/lib/dashboard/templates";
+import { CardSkeleton } from "@/app/components/dashboard/Skeleton";
 
 function Toggle({ name, defaultChecked }: { name: string; defaultChecked: boolean }) {
   return (
@@ -13,12 +16,22 @@ function Toggle({ name, defaultChecked }: { name: string; defaultChecked: boolea
   );
 }
 
-export default async function SettingsPage() {
-  const user = await getCachedUser();
-  if (!user) return null;
-  const supabase = await createClient();
+export default function SettingsPage() {
+  const { data: profile, user, loading } = useDashboardQuery((supabase, userId) => getProfile(supabase, userId));
 
-  const profile = await getProfile(supabase, user.id);
+  if (loading || !profile || !user) {
+    return (
+      <div className="px-7 py-6">
+        <div className="grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
+          <CardSkeleton className="h-64" />
+          <CardSkeleton className="h-64" />
+        </div>
+        <div className="mt-4">
+          <CardSkeleton className="h-32" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-7 py-6">

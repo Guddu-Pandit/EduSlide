@@ -1,14 +1,12 @@
-import { createClient, getCachedUser } from "@/app/lib/supabase/server";
+"use client";
+
 import { getProfile } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { setDefaultTemplate } from "@/app/lib/dashboard/actions";
 import { TEMPLATES } from "@/app/lib/dashboard/templates";
 
-export default async function TemplatesPage() {
-  const user = await getCachedUser();
-  if (!user) return null;
-  const supabase = await createClient();
-
-  const profile = await getProfile(supabase, user.id);
+export default function TemplatesPage() {
+  const { data: profile, loading } = useDashboardQuery((supabase, userId) => getProfile(supabase, userId));
 
   return (
     <div className="px-7 py-6">
@@ -18,7 +16,7 @@ export default async function TemplatesPage() {
 
       <div className="grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-2">
         {TEMPLATES.map((t) => {
-          const isDefault = t.id === profile.default_template;
+          const isDefault = !loading && profile?.default_template === t.id;
           return (
             <form key={t.id} action={setDefaultTemplate}>
               <input type="hidden" name="template" value={t.id} />
