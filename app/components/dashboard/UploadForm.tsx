@@ -38,7 +38,7 @@ export default function UploadForm({ defaultTemplate }: { defaultTemplate: strin
   }
 
   return (
-    <form ref={formRef} action={uploadDocument} className="flex flex-col gap-4">
+    <form ref={formRef} action={uploadDocument} className="grid grid-cols-2 items-start gap-4 max-[900px]:grid-cols-1">
       <div className="rounded-xl border border-border-soft bg-surface-1 p-5">
         <div className="mb-4 text-sm font-bold text-text-strong">Upload a document</div>
 

@@ -13,9 +13,7 @@ export default async function UploadPage() {
 
   return (
     <div className="px-7 py-6">
-      <div className="max-w-[560px]">
-        <UploadForm defaultTemplate={profile.default_template} />
-      </div>
+      <UploadForm defaultTemplate={profile.default_template} />
     </div>
   );
 }

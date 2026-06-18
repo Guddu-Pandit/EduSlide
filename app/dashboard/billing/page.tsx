@@ -27,8 +27,7 @@ export default async function BillingPage() {
 
   return (
     <div className="px-7 py-6">
-      <div className="max-w-[560px]">
-        <div className="rounded-xl border border-border-soft bg-surface-1 p-5">
+      <div className="rounded-xl border border-border-soft bg-surface-1 p-5">
           <div className="mb-4 text-sm font-bold text-text-strong">Current plan</div>
 
           <div className="mb-4 flex items-center justify-between rounded-lg bg-brand-tint px-4 py-4">
@@ -59,11 +58,9 @@ export default async function BillingPage() {
             <div className="h-1.5 rounded-full bg-brand" style={{ width: `${storagePct}%` }} />
           </div>
 
-          <p className="text-[13px] text-text-muted">
-            Payment processing isn&apos;t connected yet — plan changes and billing history will appear here once it
-            is.
-          </p>
-        </div>
+        <p className="text-[13px] text-text-muted">
+          Payment processing isn&apos;t connected yet — plan changes and billing history will appear here once it is.
+        </p>
       </div>
     </div>
   );

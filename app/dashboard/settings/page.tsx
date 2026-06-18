@@ -24,7 +24,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="px-7 py-6">
-      <div className="flex max-w-[560px] flex-col gap-4">
+      <div className="grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
         <form action={updateProfile} className="rounded-xl border border-border-soft bg-surface-1 p-5">
           <div className="mb-4 text-sm font-bold text-text-strong">Profile</div>
 
@@ -96,30 +96,30 @@ export default async function SettingsPage() {
             </button>
           </div>
         </form>
+      </div>
 
-        <div className="rounded-xl border border-border-soft bg-surface-1 p-5">
-          <div className="mb-4 text-sm font-bold text-text-strong">Security</div>
+      <div className="mt-4 rounded-xl border border-border-soft bg-surface-1 p-5">
+        <div className="mb-4 text-sm font-bold text-text-strong">Security</div>
 
-          <SettingsRow title="Change password" desc="Send a password reset link to your email" last>
-            <form action={sendPasswordReset}>
-              <button
-                type="submit"
-                className="rounded-lg border border-border-mid bg-surface-1 px-3.5 py-2 text-[13px] font-medium text-text-strong hover:bg-surface-3"
-              >
-                Send reset email
-              </button>
-            </form>
-          </SettingsRow>
+        <SettingsRow title="Change password" desc="Send a password reset link to your email" last>
+          <form action={sendPasswordReset}>
+            <button
+              type="submit"
+              className="rounded-lg border border-border-mid bg-surface-1 px-3.5 py-2 text-[13px] font-medium text-text-strong hover:bg-surface-3"
+            >
+              Send reset email
+            </button>
+          </form>
+        </SettingsRow>
 
-          <div className="flex items-start justify-between gap-5 border-t border-border-soft pt-3.5">
-            <div>
-              <h4 className="mb-0.5 text-sm font-semibold text-text-strong">Delete account</h4>
-              <p className="text-[13px] leading-relaxed text-text-muted">
-                Permanently delete your account and all data
-              </p>
-            </div>
-            <span className="flex-shrink-0 text-[13px] text-text-muted">Contact support</span>
+        <div className="flex items-start justify-between gap-5 border-t border-border-soft pt-3.5">
+          <div>
+            <h4 className="mb-0.5 text-sm font-semibold text-text-strong">Delete account</h4>
+            <p className="text-[13px] leading-relaxed text-text-muted">
+              Permanently delete your account and all data
+            </p>
           </div>
+          <span className="flex-shrink-0 text-[13px] text-text-muted">Contact support</span>
         </div>
       </div>
     </div>
