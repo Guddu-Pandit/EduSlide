@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/app/lib/supabase/client";
 
@@ -17,6 +18,14 @@ export function useDashboardQuery<T>(
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Server actions redirect back to the same route after mutating data,
+  // changing only the `toast` query param. Without this, the effect below
+  // never re-runs on that redirect (its own deps are unchanged) and the page
+  // keeps showing pre-mutation data until some unrelated nav forces a remount.
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const navKey = `${pathname}?${searchParams.toString()}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +64,7 @@ export function useDashboardQuery<T>(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [navKey, ...deps]);
 
   return { data, user, loading, error };
 }

@@ -27,6 +27,13 @@ function toastRedirect(path: string, message: string): never {
   redirect(`${path}?toast=${encodeURIComponent(message)}`);
 }
 
+/** Slide count is capped by plan, not chosen by the user. */
+async function getMaxSlides(supabase: SupabaseClient, userId: string): Promise<number> {
+  const { data: profile } = await supabase.from("profiles").select("plan").eq("id", userId).single();
+  const plan = (profile?.plan as Plan) ?? "free";
+  return PLAN_LIMITS[plan]?.maxSlides ?? PLAN_LIMITS.free.maxSlides;
+}
+
 /**
  * Downloads the source file from the user's storage folder, extracts its
  * text, calls the model, and writes the result back onto the presentation
@@ -38,6 +45,7 @@ async function runGeneration(
   presentationId: string,
   documentId: string,
   template: string,
+  maxSlides: number,
 ): Promise<"done" | "error"> {
   await supabase.from("presentations").update({ status: "generating" }).eq("id", presentationId);
 
@@ -58,7 +66,7 @@ async function runGeneration(
     const text = await extractText(buffer, doc.file_type as DocumentFileType);
     if (!text.trim()) throw new Error("Could not extract any text from the document");
 
-    const deck = await generateDeck(text, template);
+    const deck = await generateDeck(text, template, maxSlides);
 
     await supabase
       .from("presentations")
@@ -135,6 +143,7 @@ export async function uploadDocument(formData: FormData) {
   let generationResult: "done" | "error" | null = null;
 
   if (autoGenerate) {
+    const maxSlides = await getMaxSlides(supabase, user.id);
     const { data: presentation } = await supabase
       .from("presentations")
       .insert({
@@ -143,12 +152,13 @@ export async function uploadDocument(formData: FormData) {
         name: file.name.replace(/\.[^./]+$/, ""),
         template,
         status: "queued",
+        requested_slide_count: maxSlides,
       })
       .select()
       .single();
 
     if (presentation) {
-      generationResult = await runGeneration(supabase, presentation.id, doc.id, template);
+      generationResult = await runGeneration(supabase, presentation.id, doc.id, template, maxSlides);
     }
   }
 
@@ -182,6 +192,7 @@ export async function convertDocument(formData: FormData) {
 
   if (!doc) toastRedirect("/dashboard/documents", "Document not found");
 
+  const maxSlides = await getMaxSlides(supabase, user.id);
   const { data: presentation } = await supabase
     .from("presentations")
     .insert({
@@ -190,12 +201,13 @@ export async function convertDocument(formData: FormData) {
       name: doc.name.replace(/\.[^./]+$/, ""),
       template,
       status: "queued",
+      requested_slide_count: maxSlides,
     })
     .select()
     .single();
 
   const result = presentation
-    ? await runGeneration(supabase, presentation.id, documentId, template)
+    ? await runGeneration(supabase, presentation.id, documentId, template, maxSlides)
     : "error";
 
   revalidatePath("/dashboard/presentations");
@@ -257,10 +269,15 @@ export async function retryPresentation(formData: FormData) {
     .select()
     .single();
 
-  const result =
-    presentation?.document_id
-      ? await runGeneration(supabase, presentation.id, presentation.document_id, presentation.template)
-      : "error";
+  const result = presentation?.document_id
+    ? await runGeneration(
+        supabase,
+        presentation.id,
+        presentation.document_id,
+        presentation.template,
+        presentation.requested_slide_count ?? (await getMaxSlides(supabase, user.id)),
+      )
+    : "error";
 
   revalidatePath("/dashboard/presentations");
 

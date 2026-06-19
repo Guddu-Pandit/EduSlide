@@ -26,7 +26,11 @@ export async function extractText(buffer: Buffer, fileType: DocumentFileType): P
   return buffer.toString("utf-8");
 }
 
-export async function generateDeck(sourceText: string, template: string): Promise<GeneratedDeck> {
+export async function generateDeck(
+  sourceText: string,
+  template: string,
+  maxSlides: number,
+): Promise<GeneratedDeck> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
 
@@ -43,9 +47,10 @@ export async function generateDeck(sourceText: string, template: string): Promis
         content:
           "You convert source documents into slide deck outlines for a presentation tool. " +
           'Respond with strict JSON only, in this exact shape: {"slides":[{"title":string,"bullets":string[],"notes":string}]}. ' +
-          "Produce 6 to 14 slides. The first slide is a title slide (bullets can be empty). " +
-          "Each other slide needs a short title and 3-5 concise bullets (max ~14 words each). " +
-          "Put a 1-2 sentence speaker note in `notes` for each slide. End with a brief summary/closing slide.",
+          `Produce exactly ${maxSlides} slide${maxSlides === 1 ? "" : "s"} total — this is a hard limit from the user's plan, do not exceed it. ` +
+          "The first slide is a title slide (bullets can be empty). If the count allows, end with a brief summary/closing slide. " +
+          "Each other slide needs a short title and 2-5 concise bullets (max ~14 words each). " +
+          "Put a 1-2 sentence speaker note in `notes` for each slide.",
       },
       {
         role: "user",
@@ -66,6 +71,11 @@ export async function generateDeck(sourceText: string, template: string): Promis
 
   if (!Array.isArray(parsed.slides) || parsed.slides.length === 0) {
     throw new Error("The model returned no slides");
+  }
+
+  // Enforce the plan cap in code too, in case the model overshoots.
+  if (parsed.slides.length > maxSlides) {
+    parsed.slides = parsed.slides.slice(0, maxSlides);
   }
 
   return parsed;

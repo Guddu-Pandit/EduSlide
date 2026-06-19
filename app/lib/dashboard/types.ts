@@ -43,6 +43,7 @@ export interface PresentationRow {
   name: string;
   template: string;
   slide_count: number;
+  requested_slide_count: number | null;
   status: PresentationStatus;
   error_message: string | null;
   content: GeneratedDeck | null;
