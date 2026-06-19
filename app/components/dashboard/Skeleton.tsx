@@ -1,6 +1,6 @@
 export function StatGridSkeleton() {
   return (
-    <div className="mb-6 grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2">
+    <div className="mb-6 grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="h-[92px] animate-pulse rounded-xl border border-border-soft bg-surface-1" />
       ))}

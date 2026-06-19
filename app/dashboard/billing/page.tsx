@@ -22,7 +22,7 @@ export default function BillingPage() {
 
   if (loading || !data) {
     return (
-      <div className="px-7 py-6">
+      <div className="px-4 py-5 md:px-7 md:py-6">
         <CardSkeleton className="h-72" />
       </div>
     );
@@ -34,7 +34,7 @@ export default function BillingPage() {
   const storUsage = storageUsage(limits.storageBytes, stats.storageBytes);
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <div className="rounded-xl border border-border-soft bg-surface-1 p-5">
         <div className="mb-4 text-sm font-bold text-text-strong">Current plan</div>
 

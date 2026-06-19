@@ -10,7 +10,7 @@ export default function UploadPage() {
 
   if (loading || !profile) {
     return (
-      <div className="grid grid-cols-2 gap-4 px-7 py-6 max-[900px]:grid-cols-1">
+      <div className="grid grid-cols-2 gap-4 px-4 py-5 md:px-7 md:py-6 max-[900px]:grid-cols-1">
         <CardSkeleton className="h-64" />
         <CardSkeleton className="h-64" />
       </div>
@@ -18,7 +18,7 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <UploadForm defaultTemplate={profile.default_template} />
     </div>
   );

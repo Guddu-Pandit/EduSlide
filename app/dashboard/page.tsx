@@ -49,7 +49,7 @@ export default function OverviewPage() {
 
   if (loading || !data) {
     return (
-      <div className="px-7 py-6">
+      <div className="px-4 py-5 md:px-7 md:py-6">
         <StatGridSkeleton />
         <TwoColSkeleton />
         <CardSkeleton className="h-32" />
@@ -63,8 +63,8 @@ export default function OverviewPage() {
   const storUsage = storageUsage(limits.storageBytes, stats.storageBytes);
 
   return (
-    <div className="px-7 py-6">
-      <div className="mb-6 grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2">
+    <div className="px-4 py-5 md:px-7 md:py-6">
+      <div className="mb-6 grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
         <StatCard
           label="Presentations"
           icon={PresentationIcon}
@@ -117,13 +117,13 @@ export default function OverviewPage() {
                 {presentations.slice(0, 4).map((p) => (
                   <tr key={p.id} className="border-b border-border-soft last:border-none">
                     <td className="py-3">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex min-w-0 items-center gap-2.5">
                         <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
                           <PresentationIcon className="h-4 w-4" />
                         </span>
-                        <div>
-                          <div className="text-[13px] font-medium text-text-strong">{p.name}</div>
-                          <div className="text-[11px] text-text-muted">
+                        <div className="min-w-0">
+                          <div className="truncate text-[13px] font-medium text-text-strong">{p.name}</div>
+                          <div className="truncate text-[11px] text-text-muted">
                             {p.slide_count > 0 ? `${p.slide_count} slides` : templateName(p.template)}
                           </div>
                         </div>

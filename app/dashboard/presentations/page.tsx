@@ -23,7 +23,7 @@ const FILTERS: { key: PresentationStatus | "all"; label: string }[] = [
 
 export default function PresentationsPage() {
   return (
-    <Suspense fallback={<div className="px-7 py-6"><TableSkeleton /></div>}>
+    <Suspense fallback={<div className="px-4 py-5 md:px-7 md:py-6"><TableSkeleton /></div>}>
       <PresentationsContent />
     </Suspense>
   );
@@ -40,9 +40,9 @@ function PresentationsContent() {
   );
 
   return (
-    <div className="px-7 py-6">
-      <div className="mb-5 flex items-center justify-between">
-        <div className="flex gap-2">
+    <div className="px-4 py-5 md:px-7 md:py-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
           {FILTERS.map((f) => {
             const active = (f.key === "all" && !status) || f.key === status;
             const href = f.key === "all" ? "/dashboard/presentations" : `/dashboard/presentations?status=${f.key}`;
@@ -82,7 +82,8 @@ function PresentationsContent() {
               </Link>
             </div>
           ) : (
-            <table className="w-full text-[13px]">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-[13px]">
               <thead>
                 <tr className="border-b border-border-soft text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                   <th className="py-2.5 pl-5 font-semibold">Presentation</th>
@@ -138,6 +139,7 @@ function PresentationsContent() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       )}

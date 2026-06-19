@@ -20,7 +20,7 @@ export default function DocumentsPage() {
 
   if (loading || !data) {
     return (
-      <div className="px-7 py-6">
+      <div className="px-4 py-5 md:px-7 md:py-6">
         <TableSkeleton />
       </div>
     );
@@ -29,7 +29,7 @@ export default function DocumentsPage() {
   const { documents, profile } = data;
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <div className="overflow-hidden rounded-xl border border-border-soft bg-surface-1">
         {documents.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-center text-text-muted">
@@ -40,7 +40,8 @@ export default function DocumentsPage() {
             </Link>
           </div>
         ) : (
-          <table className="w-full text-[13px]">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-[13px]">
             <thead>
               <tr className="border-b border-border-soft text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                 <th className="py-2.5 pl-5 font-semibold">Document</th>
@@ -106,6 +107,7 @@ export default function DocumentsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

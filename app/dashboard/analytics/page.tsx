@@ -12,7 +12,7 @@ export default function AnalyticsPage() {
 
   if (loading || !data) {
     return (
-      <div className="px-7 py-6">
+      <div className="px-4 py-5 md:px-7 md:py-6">
         <StatGridSkeleton />
         <div className="mb-4 grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
           <CardSkeleton />
@@ -61,7 +61,7 @@ export default function AnalyticsPage() {
   const maxDay = Math.max(1, ...days.map((d) => d.count));
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <div className="mb-6 grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-1">
         <StatCard label="Total generated" icon={PresentationIcon} value={presentations.length} sub="All time" />
         <StatCard
