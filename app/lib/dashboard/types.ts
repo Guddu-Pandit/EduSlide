@@ -26,6 +26,16 @@ export interface DocumentRow {
   created_at: string;
 }
 
+export interface GeneratedSlide {
+  title: string;
+  bullets: string[];
+  notes?: string;
+}
+
+export interface GeneratedDeck {
+  slides: GeneratedSlide[];
+}
+
 export interface PresentationRow {
   id: string;
   user_id: string;
@@ -35,6 +45,7 @@ export interface PresentationRow {
   slide_count: number;
   status: PresentationStatus;
   error_message: string | null;
+  content: GeneratedDeck | null;
   created_at: string;
   completed_at: string | null;
 }

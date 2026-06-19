@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Presentation as PresentationIcon, RefreshCw, Trash2 } from "lucide-react";
+import { Eye, Presentation as PresentationIcon, RefreshCw, Trash2 } from "lucide-react";
 import { getPresentations } from "@/app/lib/dashboard/queries";
 import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { deletePresentation, retryPresentation } from "@/app/lib/dashboard/actions";
@@ -102,7 +102,13 @@ function PresentationsContent() {
                         <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
                           <PresentationIcon className="h-4 w-4" />
                         </span>
-                        <span className="font-medium text-text-strong">{p.name}</span>
+                        {p.status === "done" ? (
+                          <Link href={`/dashboard/presentations/${p.id}`} className="font-medium text-text-strong hover:text-brand">
+                            {p.name}
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-text-strong">{p.name}</span>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 text-xs text-text-muted">{templateName(p.template)}</td>
@@ -113,6 +119,14 @@ function PresentationsContent() {
                     <td className="py-3 text-xs text-text-muted">{formatDate(p.created_at)}</td>
                     <td className="py-3 pr-5">
                       <div className="flex gap-1.5">
+                        {p.status === "done" && (
+                          <Link
+                            href={`/dashboard/presentations/${p.id}`}
+                            className="flex items-center gap-1 rounded-lg border border-border-mid px-2.5 py-1.5 text-xs font-medium text-text-strong hover:bg-surface-3"
+                          >
+                            <Eye className="h-3 w-3" /> View
+                          </Link>
+                        )}
                         {p.status === "error" && (
                           <form action={retryPresentation}>
                             <input type="hidden" name="id" value={p.id} />

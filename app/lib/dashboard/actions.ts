@@ -7,6 +7,7 @@ import { createClient } from "@/app/lib/supabase/server";
 import { createAdminClient } from "@/app/lib/supabase/admin";
 import { PLAN_LIMITS, type Plan } from "./plan";
 import type { DocumentFileType } from "./types";
+import { extractText, generateDeck } from "./generate";
 
 const EXT_TO_TYPE: Record<string, DocumentFileType> = {
   pdf: "pdf",
@@ -24,6 +25,64 @@ async function requireUser(supabase: SupabaseClient): Promise<User> {
 
 function toastRedirect(path: string, message: string): never {
   redirect(`${path}?toast=${encodeURIComponent(message)}`);
+}
+
+/**
+ * Downloads the source file from the user's storage folder, extracts its
+ * text, calls the model, and writes the result back onto the presentation
+ * row. Runs inline (no background queue exists) — failures are recorded as
+ * an "error" status rather than thrown, so callers can still redirect.
+ */
+async function runGeneration(
+  supabase: SupabaseClient,
+  presentationId: string,
+  documentId: string,
+  template: string,
+): Promise<"done" | "error"> {
+  await supabase.from("presentations").update({ status: "generating" }).eq("id", presentationId);
+
+  try {
+    const { data: doc, error: docError } = await supabase
+      .from("documents")
+      .select("file_path, file_type")
+      .eq("id", documentId)
+      .single();
+    if (docError || !doc) throw new Error("Source document not found");
+
+    const { data: blob, error: downloadError } = await supabase.storage
+      .from("documents")
+      .download(doc.file_path);
+    if (downloadError || !blob) throw new Error("Could not read the source file from storage");
+
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    const text = await extractText(buffer, doc.file_type as DocumentFileType);
+    if (!text.trim()) throw new Error("Could not extract any text from the document");
+
+    const deck = await generateDeck(text, template);
+
+    await supabase
+      .from("presentations")
+      .update({
+        status: "done",
+        slide_count: deck.slides.length,
+        content: deck,
+        error_message: null,
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", presentationId);
+
+    return "done";
+  } catch (err) {
+    await supabase
+      .from("presentations")
+      .update({
+        status: "error",
+        error_message: err instanceof Error ? err.message : "Generation failed",
+      })
+      .eq("id", presentationId);
+
+    return "error";
+  }
 }
 
 export async function uploadDocument(formData: FormData) {
@@ -73,24 +132,38 @@ export async function uploadDocument(formData: FormData) {
   const autoGenerate = formData.get("autoGenerate") === "on";
   const template = (formData.get("template") as string) || "corporate";
 
+  let generationResult: "done" | "error" | null = null;
+
   if (autoGenerate) {
-    await supabase.from("presentations").insert({
-      user_id: user.id,
-      document_id: doc.id,
-      name: file.name.replace(/\.[^./]+$/, ""),
-      template,
-      status: "queued",
-    });
+    const { data: presentation } = await supabase
+      .from("presentations")
+      .insert({
+        user_id: user.id,
+        document_id: doc.id,
+        name: file.name.replace(/\.[^./]+$/, ""),
+        template,
+        status: "queued",
+      })
+      .select()
+      .single();
+
+    if (presentation) {
+      generationResult = await runGeneration(supabase, presentation.id, doc.id, template);
+    }
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/documents");
   revalidatePath("/dashboard/presentations");
 
-  toastRedirect(
-    "/dashboard/documents",
-    autoGenerate ? "Document uploaded — generation queued" : "Document uploaded",
-  );
+  const message =
+    generationResult === "done"
+      ? "Document uploaded — presentation generated"
+      : generationResult === "error"
+        ? "Document uploaded — generation failed, see Presentations"
+        : "Document uploaded";
+
+  toastRedirect("/dashboard/documents", message);
 }
 
 export async function convertDocument(formData: FormData) {
@@ -109,19 +182,30 @@ export async function convertDocument(formData: FormData) {
 
   if (!doc) toastRedirect("/dashboard/documents", "Document not found");
 
-  await supabase.from("presentations").insert({
-    user_id: user.id,
-    document_id: documentId,
-    name: doc.name.replace(/\.[^./]+$/, ""),
-    template,
-    status: "queued",
-  });
+  const { data: presentation } = await supabase
+    .from("presentations")
+    .insert({
+      user_id: user.id,
+      document_id: documentId,
+      name: doc.name.replace(/\.[^./]+$/, ""),
+      template,
+      status: "queued",
+    })
+    .select()
+    .single();
+
+  const result = presentation
+    ? await runGeneration(supabase, presentation.id, documentId, template)
+    : "error";
 
   revalidatePath("/dashboard/presentations");
   revalidatePath("/dashboard/documents");
   revalidatePath("/dashboard");
 
-  toastRedirect("/dashboard/presentations", "Generation queued");
+  toastRedirect(
+    "/dashboard/presentations",
+    result === "done" ? "Presentation generated" : "Generation failed — see status for details",
+  );
 }
 
 export async function deleteDocument(formData: FormData) {
@@ -165,15 +249,25 @@ export async function retryPresentation(formData: FormData) {
   const user = await requireUser(supabase);
   const id = formData.get("id") as string;
 
-  await supabase
+  const { data: presentation } = await supabase
     .from("presentations")
     .update({ status: "queued", error_message: null, slide_count: 0, completed_at: null })
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  const result =
+    presentation?.document_id
+      ? await runGeneration(supabase, presentation.id, presentation.document_id, presentation.template)
+      : "error";
 
   revalidatePath("/dashboard/presentations");
 
-  toastRedirect("/dashboard/presentations", "Generation re-queued");
+  toastRedirect(
+    "/dashboard/presentations",
+    result === "done" ? "Presentation generated" : "Generation failed — see status for details",
+  );
 }
 
 export async function updateProfile(formData: FormData) {
