@@ -1,9 +1,10 @@
 "use client";
 
-import { Crown } from "lucide-react";
+import { Check, Crown } from "lucide-react";
 import { getDashboardStats, getProfile } from "@/app/lib/dashboard/queries";
 import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
-import { PLAN_LIMITS } from "@/app/lib/dashboard/plan";
+import { upgradePlan } from "@/app/lib/dashboard/actions";
+import { PLAN_LIMITS, PLAN_ORDER } from "@/app/lib/dashboard/plan";
 import { formatBytes } from "@/app/lib/dashboard/format";
 import { CardSkeleton } from "@/app/components/dashboard/Skeleton";
 
@@ -68,8 +69,64 @@ export default function BillingPage() {
           </div>
 
         <p className="text-[13px] text-text-muted">
-          Payment processing isn&apos;t connected yet — plan changes and billing history will appear here once it is.
+          Payment processing isn&apos;t connected yet — switching plans below applies instantly without charging you.
         </p>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-4 max-[900px]:grid-cols-1">
+        {PLAN_ORDER.map((planKey) => {
+          const planInfo = PLAN_LIMITS[planKey];
+          const isCurrent = profile.plan === planKey;
+          const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(profile.plan);
+
+          return (
+            <div
+              key={planKey}
+              className={`flex flex-col rounded-xl border p-5 ${
+                isCurrent ? "border-brand bg-brand-tint/40" : "border-border-soft bg-surface-1"
+              }`}
+            >
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-bold text-text-strong">{planInfo.label}</span>
+                {isCurrent && (
+                  <span className="flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-brand">
+                    <Crown className="h-2.5 w-2.5" /> Current
+                  </span>
+                )}
+              </div>
+              <div className="mb-4 text-xl font-bold text-text-strong">{planInfo.price}</div>
+
+              <ul className="mb-5 flex flex-1 flex-col gap-2">
+                {planInfo.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2 text-[13px] text-text-muted">
+                    <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-brand" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              {isCurrent ? (
+                <button
+                  type="button"
+                  disabled
+                  className="cursor-default rounded-lg border border-border-mid px-3.5 py-2 text-[13px] font-semibold text-text-muted"
+                >
+                  Current plan
+                </button>
+              ) : (
+                <form action={upgradePlan}>
+                  <input type="hidden" name="plan" value={planKey} />
+                  <button
+                    type="submit"
+                    className="w-full rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-white hover:opacity-90"
+                  >
+                    {isUpgrade ? `Upgrade to ${planInfo.label}` : `Switch to ${planInfo.label}`}
+                  </button>
+                </form>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

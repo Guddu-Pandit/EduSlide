@@ -2,9 +2,10 @@
 
 import { getProfile } from "@/app/lib/dashboard/queries";
 import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
-import { sendPasswordReset, updatePreferences, updateProfile } from "@/app/lib/dashboard/actions";
+import { deleteAccount, sendPasswordReset, updatePreferences, updateProfile } from "@/app/lib/dashboard/actions";
 import { TEMPLATES } from "@/app/lib/dashboard/templates";
 import { CardSkeleton } from "@/app/components/dashboard/Skeleton";
+import DeleteAccountButton from "@/app/components/dashboard/DeleteAccountButton";
 
 function Toggle({ name, defaultChecked }: { name: string; defaultChecked: boolean }) {
   return (
@@ -130,7 +131,9 @@ export default function SettingsPage() {
               Permanently delete your account and all data
             </p>
           </div>
-          <span className="flex-shrink-0 text-[13px] text-text-muted">Contact support</span>
+          <form action={deleteAccount}>
+            <DeleteAccountButton />
+          </form>
         </div>
       </div>
     </div>
