@@ -11,6 +11,7 @@ export const PLAN_LIMITS: Record<
     tagline: string;
     presentationLimit: PresentationLimit;
     storageBytes: number | null;
+    maxSlides: number;
     price: string;
     features: string[];
   }
@@ -20,17 +21,26 @@ export const PLAN_LIMITS: Record<
     tagline: "Try it out",
     presentationLimit: { count: 2 },
     storageBytes: 50 * 1024 * 1024,
+    maxSlides: 3,
     price: "$0 / month",
-    features: ["2 presentations / week", "50 MB storage", "Standard templates", "Community support"],
+    features: [
+      "2 presentations / week",
+      "Up to 3 slides per deck",
+      "50 MB storage",
+      "Standard templates",
+      "Community support",
+    ],
   },
   pro: {
     label: "Pro",
     tagline: "For regular use",
     presentationLimit: { count: 5 },
     storageBytes: 150 * 1024 * 1024,
+    maxSlides: 8,
     price: "$12 / month",
     features: [
       "5 presentations / week",
+      "Up to 8 slides per deck",
       "150 MB storage",
       "All templates + custom branding",
       "AI-generated speaker notes",
@@ -42,9 +52,11 @@ export const PLAN_LIMITS: Record<
     tagline: "For schools & orgs",
     presentationLimit: null,
     storageBytes: null,
+    maxSlides: 15,
     price: "$39 / month",
     features: [
       "Unlimited presentations",
+      "Up to 15 slides per deck",
       "Unlimited storage",
       "Shared team workspace",
       "Centralized billing",

@@ -93,6 +93,22 @@ export async function getPresentations(
   return (data ?? []) as PresentationRow[];
 }
 
+export async function getPresentation(
+  supabase: SupabaseClient,
+  userId: string,
+  id: string,
+): Promise<PresentationRow> {
+  const { data, error } = await supabase
+    .from("presentations")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !data) throw new Error("Presentation not found");
+  return data as PresentationRow;
+}
+
 export interface DashboardStats {
   presentationsCount: number;
   presentationsThisMonth: number;
