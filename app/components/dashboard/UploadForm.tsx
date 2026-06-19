@@ -42,6 +42,19 @@ export default function UploadForm({ defaultTemplate }: { defaultTemplate: strin
       <div className="rounded-xl border border-border-soft bg-surface-1 p-5">
         <div className="mb-4 text-sm font-bold text-text-strong">Upload a document</div>
 
+        {/* Stays mounted across both states below — moving it inside the
+            conditional unmounts it (and the File it holds) the moment
+            `submitting` flips true, so requestSubmit() later fires with no
+            file in the FormData. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          name="file"
+          accept=".pdf,.docx,.txt"
+          className="hidden"
+          onChange={(e) => handleFile(e.target.files?.[0])}
+        />
+
         {!submitting ? (
           <div
             role="button"
@@ -56,7 +69,16 @@ export default function UploadForm({ defaultTemplate }: { defaultTemplate: strin
             onDrop={(e) => {
               e.preventDefault();
               setDragOver(false);
-              handleFile(e.dataTransfer.files?.[0]);
+              const file = e.dataTransfer.files?.[0];
+              // A dropped file never lands in the <input>'s own files list —
+              // assign it explicitly so the form submission (which reads
+              // from the input) actually includes it.
+              if (file && fileInputRef.current) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInputRef.current.files = dt.files;
+              }
+              handleFile(file);
             }}
             className={`cursor-pointer rounded-xl border-[1.5px] border-dashed px-5 py-7 text-center transition-colors sm:px-10 sm:py-9 ${
               dragOver ? "border-brand bg-brand-tint" : "border-border-mid hover:border-brand hover:bg-brand-tint"
@@ -67,14 +89,6 @@ export default function UploadForm({ defaultTemplate }: { defaultTemplate: strin
               Drop your file here or click to browse
             </div>
             <div className="text-[13px] text-text-muted">Supports PDF, DOCX, TXT · Max 25 MB</div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              name="file"
-              accept=".pdf,.docx,.txt"
-              className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0])}
-            />
           </div>
         ) : (
           <div className="rounded-lg bg-surface-3 p-4">
