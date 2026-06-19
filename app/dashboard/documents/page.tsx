@@ -1,25 +1,35 @@
+"use client";
+
 import Link from "next/link";
 import { Files, Sparkles, Trash2 } from "lucide-react";
-import { createClient } from "@/app/lib/supabase/server";
 import { getDocuments, getProfile } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { convertDocument, deleteDocument } from "@/app/lib/dashboard/actions";
 import { formatBytes, formatDate } from "@/app/lib/dashboard/format";
 import FileIcon from "@/app/components/dashboard/FileIcon";
+import { TableSkeleton } from "@/app/components/dashboard/Skeleton";
 
-export default async function DocumentsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+export default function DocumentsPage() {
+  const { data, loading } = useDashboardQuery(async (supabase, userId) => {
+    const [documents, profile] = await Promise.all([
+      getDocuments(supabase, userId),
+      getProfile(supabase, userId),
+    ]);
+    return { documents, profile };
+  });
 
-  const [documents, profile] = await Promise.all([
-    getDocuments(supabase, user.id),
-    getProfile(supabase, user.id),
-  ]);
+  if (loading || !data) {
+    return (
+      <div className="px-4 py-5 md:px-7 md:py-6">
+        <TableSkeleton />
+      </div>
+    );
+  }
+
+  const { documents, profile } = data;
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <div className="overflow-hidden rounded-xl border border-border-soft bg-surface-1">
         {documents.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-center text-text-muted">
@@ -30,7 +40,8 @@ export default async function DocumentsPage() {
             </Link>
           </div>
         ) : (
-          <table className="w-full text-[13px]">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-[13px]">
             <thead>
               <tr className="border-b border-border-soft text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                 <th className="py-2.5 pl-5 font-semibold">Document</th>
@@ -96,6 +107,7 @@ export default async function DocumentsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

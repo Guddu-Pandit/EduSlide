@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -26,3 +27,14 @@ export async function createClient() {
     },
   );
 }
+
+// Deduped per request with React's cache(): the proxy already validates the
+// session before a protected route renders, so calling this from both the
+// dashboard layout and a page only costs one network round-trip, not two.
+export const getCachedUser = cache(async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+});

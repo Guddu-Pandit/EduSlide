@@ -1,7 +1,11 @@
-import { createClient } from "@/app/lib/supabase/server";
+"use client";
+
 import { getProfile } from "@/app/lib/dashboard/queries";
-import { sendPasswordReset, updatePreferences, updateProfile } from "@/app/lib/dashboard/actions";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
+import { deleteAccount, sendPasswordReset, updatePreferences, updateProfile } from "@/app/lib/dashboard/actions";
 import { TEMPLATES } from "@/app/lib/dashboard/templates";
+import { CardSkeleton } from "@/app/components/dashboard/Skeleton";
+import DeleteAccountButton from "@/app/components/dashboard/DeleteAccountButton";
 
 function Toggle({ name, defaultChecked }: { name: string; defaultChecked: boolean }) {
   return (
@@ -13,17 +17,25 @@ function Toggle({ name, defaultChecked }: { name: string; defaultChecked: boolea
   );
 }
 
-export default async function SettingsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+export default function SettingsPage() {
+  const { data: profile, user, loading } = useDashboardQuery((supabase, userId) => getProfile(supabase, userId));
 
-  const profile = await getProfile(supabase, user.id);
+  if (loading || !profile || !user) {
+    return (
+      <div className="px-4 py-5 md:px-7 md:py-6">
+        <div className="grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
+          <CardSkeleton className="h-64" />
+          <CardSkeleton className="h-64" />
+        </div>
+        <div className="mt-4">
+          <CardSkeleton className="h-32" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <div className="grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
         <form action={updateProfile} className="rounded-xl border border-border-soft bg-surface-1 p-5">
           <div className="mb-4 text-sm font-bold text-text-strong">Profile</div>
@@ -32,7 +44,7 @@ export default async function SettingsPage() {
             <input
               name="fullName"
               defaultValue={profile.full_name ?? ""}
-              className="w-56 rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none"
+              className="w-56 max-w-full rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none max-[420px]:w-full"
             />
           </SettingsRow>
 
@@ -41,7 +53,7 @@ export default async function SettingsPage() {
               name="email"
               type="email"
               defaultValue={user.email ?? ""}
-              className="w-56 rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none"
+              className="w-56 max-w-full rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none max-[420px]:w-full"
             />
           </SettingsRow>
 
@@ -50,7 +62,7 @@ export default async function SettingsPage() {
               name="institution"
               defaultValue={profile.institution ?? ""}
               placeholder="e.g. IIT Delhi"
-              className="w-56 rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none"
+              className="w-56 max-w-full rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none max-[420px]:w-full"
             />
           </SettingsRow>
 
@@ -68,7 +80,7 @@ export default async function SettingsPage() {
             <select
               name="defaultTemplate"
               defaultValue={profile.default_template}
-              className="w-44 rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none"
+              className="w-44 max-w-full rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none max-[420px]:w-full"
             >
               {TEMPLATES.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -112,14 +124,16 @@ export default async function SettingsPage() {
           </form>
         </SettingsRow>
 
-        <div className="flex items-start justify-between gap-5 border-t border-border-soft pt-3.5">
+        <div className="flex items-start justify-between gap-5 border-t border-border-soft pt-3.5 max-[420px]:flex-col max-[420px]:items-stretch max-[420px]:gap-3">
           <div>
             <h4 className="mb-0.5 text-sm font-semibold text-text-strong">Delete account</h4>
             <p className="text-[13px] leading-relaxed text-text-muted">
               Permanently delete your account and all data
             </p>
           </div>
-          <span className="flex-shrink-0 text-[13px] text-text-muted">Contact support</span>
+          <form action={deleteAccount} className="max-[420px]:w-full">
+            <DeleteAccountButton />
+          </form>
         </div>
       </div>
     </div>
@@ -138,7 +152,9 @@ function SettingsRow({
   last?: boolean;
 }) {
   return (
-    <div className={`flex items-start justify-between gap-5 py-3.5 ${last ? "" : "border-b border-border-soft"}`}>
+    <div
+      className={`flex items-start justify-between gap-5 py-3.5 max-[420px]:flex-col max-[420px]:items-stretch max-[420px]:gap-2 ${last ? "" : "border-b border-border-soft"}`}
+    >
       <div className="min-w-0 flex-1">
         <h4 className="mb-0.5 text-sm font-semibold text-text-strong">{title}</h4>
         <p className="text-[13px] leading-relaxed text-text-muted">{desc}</p>

@@ -1,18 +1,24 @@
-import { createClient } from "@/app/lib/supabase/server";
+"use client";
+
 import { getProfile } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import UploadForm from "@/app/components/dashboard/UploadForm";
+import { CardSkeleton } from "@/app/components/dashboard/Skeleton";
 
-export default async function UploadPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+export default function UploadPage() {
+  const { data: profile, loading } = useDashboardQuery((supabase, userId) => getProfile(supabase, userId));
 
-  const profile = await getProfile(supabase, user.id);
+  if (loading || !profile) {
+    return (
+      <div className="grid grid-cols-2 gap-4 px-4 py-5 md:px-7 md:py-6 max-[900px]:grid-cols-1">
+        <CardSkeleton className="h-64" />
+        <CardSkeleton className="h-64" />
+      </div>
+    );
+  }
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <UploadForm defaultTemplate={profile.default_template} />
     </div>
   );

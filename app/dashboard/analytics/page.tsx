@@ -1,20 +1,29 @@
+"use client";
+
 import { BarChart3, Clock, Presentation as PresentationIcon, Sparkles } from "lucide-react";
-import { createClient } from "@/app/lib/supabase/server";
-import { getDocuments, getPresentations } from "@/app/lib/dashboard/queries";
+import { getDashboardData } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { templateName } from "@/app/lib/dashboard/templates";
 import StatCard from "@/app/components/dashboard/StatCard";
+import { CardSkeleton, StatGridSkeleton } from "@/app/components/dashboard/Skeleton";
 
-export default async function AnalyticsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+export default function AnalyticsPage() {
+  const { data, loading } = useDashboardQuery((supabase, userId) => getDashboardData(supabase, userId));
 
-  const [presentations, documents] = await Promise.all([
-    getPresentations(supabase, user.id),
-    getDocuments(supabase, user.id),
-  ]);
+  if (loading || !data) {
+    return (
+      <div className="px-4 py-5 md:px-7 md:py-6">
+        <StatGridSkeleton />
+        <div className="mb-4 grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <CardSkeleton className="h-32" />
+      </div>
+    );
+  }
+
+  const { documents, presentations } = data;
 
   const totalSlides = presentations.reduce((sum, p) => sum + p.slide_count, 0);
 
@@ -52,7 +61,7 @@ export default async function AnalyticsPage() {
   const maxDay = Math.max(1, ...days.map((d) => d.count));
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <div className="mb-6 grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-1">
         <StatCard label="Total generated" icon={PresentationIcon} value={presentations.length} sub="All time" />
         <StatCard

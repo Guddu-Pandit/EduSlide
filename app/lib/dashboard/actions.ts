@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/app/lib/supabase/server";
+import { createAdminClient } from "@/app/lib/supabase/admin";
+import { PLAN_LIMITS, type Plan } from "./plan";
 import type { DocumentFileType } from "./types";
 
 const EXT_TO_TYPE: Record<string, DocumentFileType> = {
@@ -245,4 +247,45 @@ export async function sendPasswordReset() {
     "/dashboard/settings",
     error ? "Could not send reset email" : "Password reset email sent",
   );
+}
+
+export async function upgradePlan(formData: FormData) {
+  const supabase = await createClient();
+  const user = await requireUser(supabase);
+
+  const plan = formData.get("plan") as Plan;
+  if (!(plan in PLAN_LIMITS)) {
+    toastRedirect("/dashboard/billing", "Invalid plan");
+  }
+
+  await supabase.from("profiles").update({ plan }).eq("id", user.id);
+
+  revalidatePath("/dashboard/billing");
+  revalidatePath("/dashboard");
+
+  toastRedirect("/dashboard/billing", `Switched to the ${PLAN_LIMITS[plan].label} plan`);
+}
+
+export async function deleteAccount() {
+  const supabase = await createClient();
+  const user = await requireUser(supabase);
+
+  const { data: docs } = await supabase
+    .from("documents")
+    .select("file_path")
+    .eq("user_id", user.id);
+
+  if (docs?.length) {
+    await supabase.storage.from("documents").remove(docs.map((d) => d.file_path));
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(user.id);
+
+  if (error) {
+    toastRedirect("/dashboard/settings", "Could not delete account — try again or contact support");
+  }
+
+  await supabase.auth.signOut();
+  redirect("/login?message=Your account has been deleted");
 }

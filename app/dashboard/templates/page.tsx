@@ -1,26 +1,22 @@
-import { createClient } from "@/app/lib/supabase/server";
+"use client";
+
 import { getProfile } from "@/app/lib/dashboard/queries";
+import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { setDefaultTemplate } from "@/app/lib/dashboard/actions";
 import { TEMPLATES } from "@/app/lib/dashboard/templates";
 
-export default async function TemplatesPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const profile = await getProfile(supabase, user.id);
+export default function TemplatesPage() {
+  const { data: profile, loading } = useDashboardQuery((supabase, userId) => getProfile(supabase, userId));
 
   return (
-    <div className="px-7 py-6">
+    <div className="px-4 py-5 md:px-7 md:py-6">
       <div className="mb-4 text-[13px] text-text-muted">
         Click a template to set it as your default for new uploads.
       </div>
 
-      <div className="grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-2">
+      <div className="grid grid-cols-3 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
         {TEMPLATES.map((t) => {
-          const isDefault = t.id === profile.default_template;
+          const isDefault = !loading && profile?.default_template === t.id;
           return (
             <form key={t.id} action={setDefaultTemplate}>
               <input type="hidden" name="template" value={t.id} />

@@ -58,7 +58,7 @@ export default function UploadForm({ defaultTemplate }: { defaultTemplate: strin
               setDragOver(false);
               handleFile(e.dataTransfer.files?.[0]);
             }}
-            className={`cursor-pointer rounded-xl border-[1.5px] border-dashed px-10 py-9 text-center transition-colors ${
+            className={`cursor-pointer rounded-xl border-[1.5px] border-dashed px-5 py-7 text-center transition-colors sm:px-10 sm:py-9 ${
               dragOver ? "border-brand bg-brand-tint" : "border-border-mid hover:border-brand hover:bg-brand-tint"
             }`}
           >
@@ -93,7 +93,7 @@ export default function UploadForm({ defaultTemplate }: { defaultTemplate: strin
       <div className="rounded-xl border border-border-soft bg-surface-1 p-5">
         <div className="mb-4 text-sm font-bold text-text-strong">Options</div>
 
-        <div className="flex items-start justify-between gap-5 py-3.5">
+        <div className="flex items-start justify-between gap-5 py-3.5 max-[420px]:flex-col max-[420px]:items-stretch max-[420px]:gap-2">
           <div>
             <h4 className="mb-0.5 text-sm font-semibold text-text-strong">Template</h4>
             <p className="text-[13px] leading-relaxed text-text-muted">Choose the visual style for your presentation</p>
@@ -101,7 +101,7 @@ export default function UploadForm({ defaultTemplate }: { defaultTemplate: strin
           <select
             name="template"
             defaultValue={defaultTemplate}
-            className="w-44 rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none"
+            className="w-44 max-w-full rounded-lg border border-border-mid bg-surface-1 px-3 py-2 text-[13px] text-text-strong focus:border-brand focus:outline-none max-[420px]:w-full"
           >
             {TEMPLATES.map((t) => (
               <option key={t.id} value={t.id}>
