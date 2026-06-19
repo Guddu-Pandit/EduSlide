@@ -96,6 +96,7 @@ export async function getPresentations(
 export interface DashboardStats {
   presentationsCount: number;
   presentationsThisMonth: number;
+  presentationsThisWeek: number;
   documentsCount: number;
   documentsNotConverted: number;
   slidesGenerated: number;
@@ -112,9 +113,14 @@ export function computeDashboardStats(
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
 
+  const weekAgo = new Date(now);
+  weekAgo.setDate(now.getDate() - 7);
+  const presentationsThisWeek = presentations.filter((p) => new Date(p.created_at) >= weekAgo).length;
+
   return {
     presentationsCount: presentations.length,
     presentationsThisMonth,
+    presentationsThisWeek,
     documentsCount: documents.length,
     documentsNotConverted: documents.filter((d) => d.presentationCount === 0).length,
     slidesGenerated: presentations.reduce((sum, p) => sum + p.slide_count, 0),

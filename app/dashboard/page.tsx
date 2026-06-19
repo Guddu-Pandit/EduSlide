@@ -18,7 +18,7 @@ import {
   getProfile,
 } from "@/app/lib/dashboard/queries";
 import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
-import { PLAN_LIMITS } from "@/app/lib/dashboard/plan";
+import { PLAN_LIMITS, presentationUsage, storageUsage } from "@/app/lib/dashboard/plan";
 import { formatBytes, formatDate, formatRelativeTime } from "@/app/lib/dashboard/format";
 import { templateName } from "@/app/lib/dashboard/templates";
 import StatCard from "@/app/components/dashboard/StatCard";
@@ -59,13 +59,8 @@ export default function OverviewPage() {
 
   const { stats, activity, presentations, profile } = data;
   const limits = PLAN_LIMITS[profile.plan];
-  const presLimitLabel = limits.presentationsPerMonth
-    ? `${stats.presentationsThisMonth} / ${limits.presentationsPerMonth}`
-    : `${stats.presentationsCount} / unlimited`;
-  const presPct = limits.presentationsPerMonth
-    ? Math.min(100, Math.round((stats.presentationsThisMonth / limits.presentationsPerMonth) * 100))
-    : 100;
-  const storagePct = Math.min(100, Math.round((stats.storageBytes / limits.storageBytes) * 100));
+  const presUsage = presentationUsage(limits.presentationLimit, stats);
+  const storUsage = storageUsage(limits.storageBytes, stats.storageBytes);
 
   return (
     <div className="px-7 py-6">
@@ -95,7 +90,7 @@ export default function OverviewPage() {
           icon={HardDrive}
           iconClassName="text-orange-700"
           value={formatBytes(stats.storageBytes)}
-          sub={`of ${formatBytes(limits.storageBytes)} on ${limits.label}`}
+          sub={storUsage.cap === null ? `Unlimited on ${limits.label}` : `of ${formatBytes(storUsage.cap)} on ${limits.label}`}
         />
       </div>
 
@@ -180,16 +175,16 @@ export default function OverviewPage() {
 
       <div className="rounded-xl border border-border-soft bg-surface-1 p-5">
         <div className="mb-4 flex items-center justify-between text-sm font-bold text-text-strong">
-          Monthly usage
+          Usage
           <span className="inline-flex items-center gap-1 rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-bold text-brand">
             <Crown className="h-2.5 w-2.5" /> {limits.label}
           </span>
         </div>
-        <UsageRow label="Presentations generated" value={presLimitLabel} pct={presPct} barClass="bg-emerald-500" />
+        <UsageRow label="Presentations generated" value={presUsage.label} pct={presUsage.pct} barClass="bg-emerald-500" />
         <UsageRow
           label="Storage used"
-          value={`${formatBytes(stats.storageBytes)} / ${formatBytes(limits.storageBytes)}`}
-          pct={storagePct}
+          value={storUsage.cap === null ? `${formatBytes(stats.storageBytes)} / Unlimited` : `${formatBytes(stats.storageBytes)} / ${formatBytes(storUsage.cap)}`}
+          pct={storUsage.pct}
         />
       </div>
     </div>
