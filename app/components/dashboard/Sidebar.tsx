@@ -134,13 +134,15 @@ export default function Sidebar({
       >
         <div
           className={`flex items-center border-b border-border-soft px-4 pb-3 pt-[18px] ${
-            iconOnly ? "flex-col gap-2" : "justify-between gap-2"
+            iconOnly ? "flex-col gap-2.5" : "justify-between gap-2"
           }`}
         >
           <Link
             href="/dashboard"
             onClick={onClose}
-            className="flex items-center gap-2.5 overflow-hidden font-display text-base font-bold tracking-tight text-text-strong"
+            className={`flex items-center gap-2.5 overflow-hidden font-display text-base font-bold tracking-tight text-text-strong ${
+              iconOnly ? "justify-center" : ""
+            }`}
           >
             <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[7px] bg-brand text-sm font-bold text-white">
               E
@@ -184,6 +186,7 @@ export default function Sidebar({
           ))}
         </nav>
 
+        {iconOnly && <div className="mx-3 my-1 h-px bg-border-soft" aria-hidden="true" />}
         <nav className="flex flex-col gap-0.5 px-2.5 pb-1.5 pt-2.5">
           {!iconOnly && (
             <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
@@ -195,6 +198,7 @@ export default function Sidebar({
           ))}
         </nav>
 
+        {iconOnly && <div className="mx-3 my-1 h-px bg-border-soft" aria-hidden="true" />}
         <nav className="flex flex-col gap-0.5 px-2.5 pb-1.5 pt-2.5">
           {!iconOnly && (
             <div className="mb-1 px-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
