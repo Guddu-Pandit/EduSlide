@@ -123,7 +123,7 @@ export async function generateDeck(
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
 
   const client = new OpenAI({ apiKey });
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const model = process.env.OPENAI_MODEL || "gpt-4o";
   const trimmed = sourceText.slice(0, MAX_SOURCE_CHARS);
 
   const completion = await client.chat.completions.create({
