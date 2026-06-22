@@ -26,10 +26,15 @@ export interface DocumentRow {
   created_at: string;
 }
 
+export type SlideType = "title" | "content" | "data" | "summary";
+
 export interface GeneratedSlide {
+  slideType: SlideType;
   title: string;
   bullets: string[];
-  notes?: string;
+  notes: string;
+  imageQuery: string;
+  imageUrl: string | null;
 }
 
 export interface GeneratedDeck {
