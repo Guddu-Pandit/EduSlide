@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { DocumentFileType } from "./types";
+import type { DocumentFileType, GeneratedDeck, SlideType } from "./types";
 
 // Generous but bounded — keeps prompt size (and cost) predictable for very
 // large source documents while still giving the model enough material.
@@ -7,21 +7,6 @@ const MAX_SOURCE_CHARS = 16000;
 
 const PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
 const UNSPLASH_SEARCH_URL = "https://api.unsplash.com/search/photos";
-
-export type SlideType = "title" | "content" | "data" | "summary";
-
-export interface GeneratedSlide {
-  slideType: SlideType;
-  title: string;
-  bullets: string[];
-  notes: string;
-  imageQuery: string;
-  imageUrl: string | null;
-}
-
-export interface GeneratedDeck {
-  slides: GeneratedSlide[];
-}
 
 interface ModelSlide {
   slideType?: string;
