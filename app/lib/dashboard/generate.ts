@@ -29,25 +29,21 @@ function normalizeSlideType(value: string | undefined): SlideType {
 let pdfWorkerConfigured = false;
 
 /**
- * pdfjs-dist's Node "fake worker" path does a runtime `import(workerSrc)` with
- * a relative default ("./pdf.worker.mjs"). Turbopack bundles the calling
- * module into .next/dev/server/chunks/ssr without carrying that file
- * alongside it, so the relative import 404s. Point it at the real on-disk
- * worker file instead — a fully-resolved path bypasses bundler analysis
- * (the import target is a runtime variable, not a literal) and falls
- * through to Node's native dynamic import.
+ * pdfjs-dist's Node "fake worker" path checks `globalThis.pdfjsWorker` for a
+ * pre-loaded WorkerMessageHandler before falling back to a runtime
+ * `import(workerSrc)` call — and that fallback breaks under Turbopack, which
+ * instruments dynamic imports even when the target is a fully-resolved path
+ * computed at runtime. Pre-populating the escape hatch via a literal static
+ * import (which Turbopack bundles normally, like any other import) means
+ * pdfjs never reaches its own broken dynamic import.
  */
 async function configurePdfWorker(): Promise<void> {
   if (pdfWorkerConfigured) return;
   pdfWorkerConfigured = true;
 
-  const { PDFParse } = await import("pdf-parse");
-  const { createRequire } = await import("node:module");
-  const { pathToFileURL } = await import("node:url");
-
-  const require = createRequire(import.meta.url);
-  const workerPath = require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
-  PDFParse.setWorker(pathToFileURL(workerPath).href);
+  // @ts-expect-error — pdfjs-dist ships no type declarations for this subpath.
+  const pdfjsWorker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  (globalThis as typeof globalThis & { pdfjsWorker?: unknown }).pdfjsWorker = pdfjsWorker;
 }
 
 export async function extractText(buffer: Buffer, fileType: DocumentFileType): Promise<string> {
