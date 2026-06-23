@@ -45,9 +45,9 @@ export default function PresentationDetail({ id }: { id: string }) {
         <ArrowLeft className="h-3.5 w-3.5" /> Back to presentations
       </Link>
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-bold text-text-strong">{presentation.name}</h1>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="break-words text-lg font-bold text-text-strong">{presentation.name}</h1>
           <p className="text-[13px] text-text-muted">
             {templateName(presentation.template)} · {formatDate(presentation.created_at)}
           </p>
@@ -58,7 +58,8 @@ export default function PresentationDetail({ id }: { id: string }) {
               href={`/dashboard/presentations/${presentation.id}/export`}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border-soft px-3 py-1.5 text-[13px] font-medium text-text-strong hover:bg-surface-1"
             >
-              <Download className="h-3.5 w-3.5" /> Download .pptx
+              <Download className="h-3.5 w-3.5" /> <span className="max-[420px]:hidden">Download .pptx</span>
+              <span className="hidden max-[420px]:inline">.pptx</span>
             </a>
           )}
           <StatusPill status={presentation.status} />
@@ -98,7 +99,7 @@ export default function PresentationDetail({ id }: { id: string }) {
                         />
                       </>
                     )}
-                    <div className="relative flex h-full flex-col justify-end px-6 py-5">
+                    <div className="relative flex h-full flex-col justify-end px-4 py-4 sm:px-6 sm:py-5">
                       <div
                         className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide"
                         style={{ color: slide.imageUrl ? "rgba(255,255,255,.7)" : template.accentColor }}
@@ -106,7 +107,7 @@ export default function PresentationDetail({ id }: { id: string }) {
                         Title slide
                       </div>
                       <h3
-                        className="text-xl font-bold"
+                        className="text-lg font-bold sm:text-xl"
                         style={{ color: slide.imageUrl ? "#ffffff" : template.titleColor }}
                       >
                         {slide.title}
@@ -118,7 +119,7 @@ export default function PresentationDetail({ id }: { id: string }) {
                     {slide.imageUrl && (
                       <img src={slide.imageUrl} alt="" className="h-28 w-full object-cover" />
                     )}
-                    <div className="px-6 py-5">
+                    <div className="px-4 py-4 sm:px-6 sm:py-5">
                       <div
                         className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide"
                         style={{ color: template.accentColor }}
@@ -144,7 +145,7 @@ export default function PresentationDetail({ id }: { id: string }) {
                   </>
                 )}
                 {slide.notes && (
-                  <div className="border-t border-white/10 bg-black/10 px-6 py-2.5 text-[12px] italic" style={{ color: template.bodyColor }}>
+                  <div className="border-t border-white/10 bg-black/10 px-4 py-2.5 text-[12px] italic sm:px-6" style={{ color: template.bodyColor }}>
                     Notes: {slide.notes}
                   </div>
                 )}
