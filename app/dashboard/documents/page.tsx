@@ -41,20 +41,20 @@ export default function DocumentsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-[13px]">
+          <table className="w-full min-w-180 text-[13px]">
             <thead>
               <tr className="border-b border-border-soft text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                <th className="py-2.5 pl-5 font-semibold">Document</th>
-                <th className="py-2.5 font-semibold">Size</th>
-                <th className="py-2.5 font-semibold">Uploaded</th>
-                <th className="py-2.5 font-semibold">Presentations</th>
-                <th className="py-2.5 pr-5 font-semibold">Actions</th>
+                <th className="py-2.5 pl-5 pr-4 font-semibold">Document</th>
+                <th className="px-4 py-2.5 font-semibold">Size</th>
+                <th className="px-4 py-2.5 font-semibold">Uploaded</th>
+                <th className="px-4 py-2.5 font-semibold">Presentations</th>
+                <th className="py-2.5 pl-4 pr-5 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {documents.map((d) => (
                 <tr key={d.id} className="border-b border-border-soft last:border-none hover:bg-surface-3/50">
-                  <td className="py-3 pl-5">
+                  <td className="py-3 pl-5 pr-4">
                     <div className="flex items-center gap-2.5">
                       <FileIcon type={d.file_type} />
                       <div>
@@ -63,9 +63,9 @@ export default function DocumentsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 text-text-muted">{formatBytes(d.size_bytes)}</td>
-                  <td className="py-3 text-xs text-text-muted">{formatDate(d.created_at)}</td>
-                  <td className="py-3">
+                  <td className="whitespace-nowrap px-4 py-3 text-text-muted">{formatBytes(d.size_bytes)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">{formatDate(d.created_at)}</td>
+                  <td className="whitespace-nowrap px-4 py-3">
                     {d.presentationCount > 0 ? (
                       <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                         {d.presentationCount} made
@@ -76,7 +76,7 @@ export default function DocumentsPage() {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 pr-5">
+                  <td className="whitespace-nowrap py-3 pl-4 pr-5">
                     <div className="flex gap-1.5">
                       <form action={convertDocument}>
                         <input type="hidden" name="documentId" value={d.id} />

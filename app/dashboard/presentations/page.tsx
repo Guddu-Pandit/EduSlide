@@ -83,23 +83,23 @@ function PresentationsContent() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-[13px]">
+            <table className="w-full min-w-200 text-[13px]">
               <thead>
                 <tr className="border-b border-border-soft text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                  <th className="py-2.5 pl-5 font-semibold">Presentation</th>
-                  <th className="py-2.5 font-semibold">Template</th>
-                  <th className="py-2.5 font-semibold">Slides</th>
-                  <th className="py-2.5 font-semibold">Status</th>
-                  <th className="py-2.5 font-semibold">Created</th>
-                  <th className="py-2.5 pr-5 font-semibold">Actions</th>
+                  <th className="py-2.5 pl-5 pr-4 font-semibold">Presentation</th>
+                  <th className="px-4 py-2.5 font-semibold">Template</th>
+                  <th className="px-4 py-2.5 font-semibold">Slides</th>
+                  <th className="px-4 py-2.5 font-semibold">Status</th>
+                  <th className="px-4 py-2.5 font-semibold">Created</th>
+                  <th className="py-2.5 pl-4 pr-5 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {presentations.map((p) => (
                   <tr key={p.id} className="border-b border-border-soft last:border-none hover:bg-surface-3/50">
-                    <td className="py-3 pl-5">
+                    <td className="py-3 pl-5 pr-4">
                       <div className="flex items-center gap-2.5">
-                        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
                           <PresentationIcon className="h-4 w-4" />
                         </span>
                         {p.status === "done" ? (
@@ -111,13 +111,13 @@ function PresentationsContent() {
                         )}
                       </div>
                     </td>
-                    <td className="py-3 text-xs text-text-muted">{templateName(p.template)}</td>
-                    <td className="py-3 text-text-muted">{p.slide_count || "—"}</td>
-                    <td className="py-3">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">{templateName(p.template)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-text-muted">{p.slide_count || "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
                       <StatusPill status={p.status} />
                     </td>
-                    <td className="py-3 text-xs text-text-muted">{formatDate(p.created_at)}</td>
-                    <td className="py-3 pr-5">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-text-muted">{formatDate(p.created_at)}</td>
+                    <td className="whitespace-nowrap py-3 pl-4 pr-5">
                       <div className="flex gap-1.5">
                         {p.status === "done" && (
                           <Link
