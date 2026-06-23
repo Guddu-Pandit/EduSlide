@@ -125,7 +125,7 @@ export default function UploadForm({ defaultTemplate }: { defaultTemplate: strin
           </select>
         </div>
 
-        <div className="flex items-start justify-between gap-5 border-t border-border-soft py-3.5">
+        <div className="flex items-start justify-between gap-5 border-t border-border-soft py-3.5 max-[420px]:flex-col max-[420px]:items-stretch max-[420px]:gap-2">
           <div>
             <h4 className="mb-0.5 text-sm font-semibold text-text-strong">Auto-generate on upload</h4>
             <p className="text-[13px] leading-relaxed text-text-muted">

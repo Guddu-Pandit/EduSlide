@@ -105,38 +105,40 @@ export default function OverviewPage() {
           {presentations.length === 0 ? (
             <EmptyRow />
           ) : (
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-border-soft text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                  <th className="pb-2.5 font-semibold">Name</th>
-                  <th className="pb-2.5 font-semibold">Status</th>
-                  <th className="pb-2.5 font-semibold">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {presentations.slice(0, 4).map((p) => (
-                  <tr key={p.id} className="border-b border-border-soft last:border-none">
-                    <td className="py-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
-                          <PresentationIcon className="h-4 w-4" />
-                        </span>
-                        <div className="min-w-0">
-                          <div className="truncate text-[13px] font-medium text-text-strong">{p.name}</div>
-                          <div className="truncate text-[11px] text-text-muted">
-                            {p.slide_count > 0 ? `${p.slide_count} slides` : templateName(p.template)}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[420px] text-[13px]">
+                <thead>
+                  <tr className="border-b border-border-soft text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                    <th className="pb-2.5 font-semibold">Name</th>
+                    <th className="pb-2.5 font-semibold">Status</th>
+                    <th className="pb-2.5 font-semibold">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {presentations.slice(0, 4).map((p) => (
+                    <tr key={p.id} className="border-b border-border-soft last:border-none">
+                      <td className="py-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+                            <PresentationIcon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="truncate text-[13px] font-medium text-text-strong">{p.name}</div>
+                            <div className="truncate text-[11px] text-text-muted">
+                              {p.slide_count > 0 ? `${p.slide_count} slides` : templateName(p.template)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      <StatusPill status={p.status} />
-                    </td>
-                    <td className="py-3 text-xs text-text-muted">{formatDate(p.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="py-3">
+                        <StatusPill status={p.status} />
+                      </td>
+                      <td className="py-3 text-xs text-text-muted">{formatDate(p.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 

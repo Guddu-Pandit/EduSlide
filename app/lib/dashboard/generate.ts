@@ -26,8 +26,29 @@ function normalizeSlideType(value: string | undefined): SlideType {
   return VALID_SLIDE_TYPES.includes(value as SlideType) ? (value as SlideType) : "content";
 }
 
+let pdfWorkerConfigured = false;
+
+/**
+ * pdfjs-dist's Node "fake worker" path checks `globalThis.pdfjsWorker` for a
+ * pre-loaded WorkerMessageHandler before falling back to a runtime
+ * `import(workerSrc)` call — and that fallback breaks under Turbopack, which
+ * instruments dynamic imports even when the target is a fully-resolved path
+ * computed at runtime. Pre-populating the escape hatch via a literal static
+ * import (which Turbopack bundles normally, like any other import) means
+ * pdfjs never reaches its own broken dynamic import.
+ */
+async function configurePdfWorker(): Promise<void> {
+  if (pdfWorkerConfigured) return;
+  pdfWorkerConfigured = true;
+
+  // @ts-expect-error — pdfjs-dist ships no type declarations for this subpath.
+  const pdfjsWorker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  (globalThis as typeof globalThis & { pdfjsWorker?: unknown }).pdfjsWorker = pdfjsWorker;
+}
+
 export async function extractText(buffer: Buffer, fileType: DocumentFileType): Promise<string> {
   if (fileType === "pdf") {
+    await configurePdfWorker();
     const { PDFParse } = await import("pdf-parse");
     const parser = new PDFParse({ data: new Uint8Array(buffer) });
     try {
@@ -102,7 +123,7 @@ export async function generateDeck(
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
 
   const client = new OpenAI({ apiKey });
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const model = process.env.OPENAI_MODEL || "gpt-4o";
   const trimmed = sourceText.slice(0, MAX_SOURCE_CHARS);
 
   const completion = await client.chat.completions.create({
