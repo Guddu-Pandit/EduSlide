@@ -36,6 +36,15 @@ export default function AdminTopbar({
 
       <div className="flex items-center gap-2.5">
         <Link
+          href="/dashboard"
+          className="flex items-center gap-1.5 rounded-lg border border-border-soft bg-surface-2 px-3 py-1.5 text-[13px] font-semibold text-text-muted transition-opacity hover:opacity-80"
+          style={{ borderColor: "#e4e6eb", background: "#f7f8fa", color: "#4b5563" }}
+          title="Back to Dashboard"
+        >
+          <LayoutDashboard className="h-[15px] w-[15px]" />
+          Dashboard
+        </Link>
+        <Link
           href="/admin/notifications"
           className="relative flex h-8 w-8 items-center justify-center rounded-md text-[#4b5563] hover:bg-[#f7f8fa]"
           title="Notifications"
