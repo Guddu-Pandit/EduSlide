@@ -10,12 +10,14 @@ export default function DashboardShell({
   fullName,
   email,
   plan,
+  role,
   presentationsCount,
   children,
 }: {
   fullName: string | null;
   email: string | undefined;
   plan: Plan;
+  role: string;
   presentationsCount: number;
   children: React.ReactNode;
 }) {
@@ -32,7 +34,7 @@ export default function DashboardShell({
         onClose={() => setMobileOpen(false)}
       />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <Topbar onMenuClick={() => setMobileOpen(true)} />
+        <Topbar isAdmin={role === "admin"} onMenuClick={() => setMobileOpen(true)} />
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>
       <Suspense>
