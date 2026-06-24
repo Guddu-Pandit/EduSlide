@@ -17,7 +17,16 @@ import {
 } from "lucide-react";
 import { logout } from "@/app/lib/auth-actions";
 
-const NAV_SECTIONS = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+  badge?: number;
+  badgeWarn?: boolean;
+};
+
+const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Overview",
     items: [
