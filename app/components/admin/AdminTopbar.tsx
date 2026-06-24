@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Search } from "lucide-react";
+import { Bell, LayoutDashboard, Search } from "lucide-react";
 
 export default function AdminTopbar({
   fullName,

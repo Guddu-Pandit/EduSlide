@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Menu, Plus, Search } from "lucide-react";
+import { Bell, Menu, Plus, Search, ShieldCheck } from "lucide-react";
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Overview",
@@ -15,7 +15,7 @@ const TITLES: Record<string, string> = {
   "/dashboard/billing": "Billing",
 };
 
-export default function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
+export default function Topbar({ onMenuClick, isAdmin }: { onMenuClick: () => void; isAdmin?: boolean }) {
   const pathname = usePathname();
   const title = TITLES[pathname] ?? "Dashboard";
 
@@ -45,6 +45,17 @@ export default function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           className="w-28 border-none bg-transparent text-[13px] text-text-strong placeholder:text-text-muted focus:outline-none md:w-36"
         />
       </form>
+
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className="hidden flex-shrink-0 items-center gap-1.5 rounded-lg border border-[#c7d6fd] bg-[#eef3ff] px-3 py-2 text-[13px] font-semibold text-[#3b6ef8] transition-opacity hover:opacity-80 sm:flex"
+          title="Go to Admin Panel"
+        >
+          <ShieldCheck className="h-[15px] w-[15px]" />
+          Admin Panel
+        </Link>
+      )}
 
       <button
         type="button"
