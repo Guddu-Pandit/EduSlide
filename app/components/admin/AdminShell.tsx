@@ -15,7 +15,7 @@ export default function AdminShell({
 }) {
   return (
     <AdminToastProvider>
-      <div className="fixed inset-0 flex flex-col overflow-hidden" style={{ background: "#f0f1f5" }}>
+      <div className="fixed inset-0 flex flex-col overflow-hidden bg-admin-bg">
         <AdminTopbar fullName={fullName} email={email} />
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <AdminSidebar />

@@ -18,6 +18,17 @@
   --border-soft: #e4e7eb;
   --border-mid: #cbd1d9;
   --border-strong: #b7bfc9;
+
+  /* Admin panel — mirrors dashboard variables */
+  --admin-surface: var(--surface-1);
+  --admin-bg: var(--surface-3);
+  --admin-input: var(--surface-2);
+  --admin-border: var(--border-soft);
+  --admin-divider: var(--border-soft);
+  --admin-text: var(--text-strong);
+  --admin-body: var(--text-muted);
+  --admin-muted: var(--text-muted);
+  --admin-hover: var(--surface-2);
 }
 
 @theme inline {
@@ -40,6 +51,17 @@
   --color-border-soft: var(--border-soft);
   --color-border-mid: var(--border-mid);
   --color-border-strong: var(--border-strong);
+
+  /* Admin panel */
+  --color-admin-surface: var(--admin-surface);
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-input: var(--admin-input);
+  --color-admin-border: var(--admin-border);
+  --color-admin-divider: var(--admin-divider);
+  --color-admin-text: var(--admin-text);
+  --color-admin-body: var(--admin-body);
+  --color-admin-muted: var(--admin-muted);
+  --color-admin-hover: var(--admin-hover);
 }
 
 @media (prefers-color-scheme: dark) {
