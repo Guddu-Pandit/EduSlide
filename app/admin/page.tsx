@@ -1,47 +1,53 @@
-"use client";
-
 import Link from "next/link";
-import { ArrowUp, ExternalLink, Eye } from "lucide-react";
-import { useAdminToast } from "@/app/components/admin/AdminToast";
-
-const SIGNUP_DATA = [
-  { day: "Mon", val: 18 },
-  { day: "Tue", val: 24 },
-  { day: "Wed", val: 31 },
-  { day: "Thu", val: 19 },
-  { day: "Fri", val: 42 },
-  { day: "Sat", val: 27 },
-  { day: "Sun", val: 14 },
-];
-const MAX_SIGNUP = Math.max(...SIGNUP_DATA.map((d) => d.val));
-
-const ACTIVITY = [
-  { color: "#16a34a", text: <>New user <b>Priya S.</b> signed up — Free plan</>, time: "2m ago" },
-  { color: "#3b6ef8", text: <><b>Rahul M.</b> upgraded from Free → Pro</>, time: "14m ago" },
-  { color: "#dc2626", text: <>Presentation report flagged by <b>Anjali T.</b></>, time: "41m ago" },
-  { color: "#ca8a04", text: <>Storage at 62% — approaching 65% alert threshold</>, time: "1h ago" },
-  { color: "#16a34a", text: <>AI processing queue cleared — all 34 jobs done</>, time: "2h ago" },
-];
-
-const NEW_USERS = [
-  { initials: "PS", ibg: "#eef3ff", itc: "#3b6ef8", name: "Priya Sharma", email: "priya@edu.in", plan: "Free", joined: "Today", status: "Active" },
-  { initials: "RM", ibg: "#fef3c7", itc: "#92400e", name: "Rahul Mehra", email: "rahul@iit.ac.in", plan: "Pro", joined: "Today", status: "Active" },
-  { initials: "AT", ibg: "#fff1f1", itc: "#dc2626", name: "Anjali Thakur", email: "anjali@college.edu", plan: "Free", joined: "Yesterday", status: "Review" },
-];
+import { ArrowUp, ExternalLink, UserPlus, FileText, Monitor } from "lucide-react";
+import { getAdminStats, getRecentActivity } from "@/app/lib/admin/queries";
+import { formatRelativeTime } from "@/app/lib/dashboard/format";
 
 const PLAN_BADGE: Record<string, string> = {
-  Free: "bg-[#f0f1f5] text-[#9ca3af]",
-  Pro: "bg-[#eef3ff] text-[#3b6ef8]",
-  Enterprise: "bg-[#edfaf3] text-[#16a34a]",
-};
-const STATUS_BADGE: Record<string, string> = {
-  Active: "bg-[#edfaf3] text-[#16a34a]",
-  Review: "bg-[#fff8e7] text-[#ca8a04]",
-  Suspended: "bg-[#fff1f1] text-[#dc2626]",
+  free: "bg-[#f0f1f5] text-[#9ca3af]",
+  pro: "bg-[#eef3ff] text-[#3b6ef8]",
+  team: "bg-[#edfaf3] text-[#16a34a]",
 };
 
-export default function AdminOverviewPage() {
-  const toast = useAdminToast();
+export default async function AdminOverviewPage() {
+  const [stats, activity] = await Promise.all([
+    getAdminStats(),
+    getRecentActivity(),
+  ]);
+
+  const metrics = [
+    {
+      label: "Total Users",
+      val: stats.totalUsers.toLocaleString(),
+      delta: `+${stats.newUsersThisMonth} this month`,
+      neutral: false,
+    },
+    {
+      label: "Presentations Generated",
+      val: stats.totalPresentations.toLocaleString(),
+      delta: `${stats.totalDocuments} documents uploaded`,
+      neutral: true,
+    },
+    {
+      label: "Free / Pro / Team",
+      val: `${stats.freeUsers} / ${stats.proUsers} / ${stats.teamUsers}`,
+      delta: "users by plan",
+      neutral: true,
+    },
+    {
+      label: "Storage Used",
+      val: stats.storageFormatted,
+      delta: `across ${stats.totalDocuments} files`,
+      neutral: true,
+    },
+  ];
+
+  const activityIconMap = {
+    signup: { Icon: UserPlus, bg: "#edfaf3", color: "#16a34a" },
+    document: { Icon: FileText, bg: "#eef3ff", color: "#3b6ef8" },
+    presentation_done: { Icon: Monitor, bg: "#edfaf3", color: "#16a34a" },
+    presentation_error: { Icon: Monitor, bg: "#fff1f1", color: "#dc2626" },
+  };
 
   return (
     <div className="p-6">
@@ -50,16 +56,11 @@ export default function AdminOverviewPage() {
 
       {/* Metrics */}
       <div className="mb-4 grid grid-cols-4 gap-3 max-[1000px]:grid-cols-2">
-        {[
-          { label: "Total Users", val: "2,841", delta: "+128 this month", up: true },
-          { label: "Presentations Generated", val: "18,432", delta: "+1.2k this week", up: true },
-          { label: "Revenue (MRR)", val: "₹4.2L", delta: "+12.4% MoM", up: true },
-          { label: "Storage Used", val: "312 GB", delta: "of 500 GB capacity", neutral: true },
-        ].map(({ label, val, delta, up, neutral }) => (
+        {metrics.map(({ label, val, delta, neutral }) => (
           <div key={label} className="rounded-xl border border-[#e4e6eb] bg-white p-4">
             <div className="mb-1.5 text-[11px] text-[#9ca3af]">{label}</div>
-            <div className="text-[24px] font-bold leading-none tracking-tight text-[#111827]">{val}</div>
-            <div className={`mt-1.5 flex items-center gap-1 text-[11px] ${neutral ? "text-[#9ca3af]" : up ? "text-[#16a34a]" : "text-[#dc2626]"}`}>
+            <div className="text-[22px] font-bold leading-none tracking-tight text-[#111827]">{val}</div>
+            <div className={`mt-1.5 flex items-center gap-1 text-[11px] ${neutral ? "text-[#9ca3af]" : "text-[#16a34a]"}`}>
               {!neutral && <ArrowUp className="h-3 w-3" />}
               {delta}
             </div>
@@ -69,82 +70,76 @@ export default function AdminOverviewPage() {
 
       {/* Two col */}
       <div className="mb-4 grid grid-cols-2 gap-4 max-[900px]:grid-cols-1">
-        {/* Bar chart */}
+        {/* Plan breakdown */}
         <div className="rounded-xl border border-[#e4e6eb] bg-white p-4">
-          <div className="mb-4 text-[13px] font-semibold text-[#111827]">Weekly Signups (last 7 days)</div>
-          <div className="flex items-end gap-1.5" style={{ height: 100 }}>
-            {SIGNUP_DATA.map(({ day, val }) => (
-              <div
-                key={day}
-                className="flex-1 rounded-t-[4px] transition-colors hover:bg-[#3b6ef8]"
-                style={{ height: `${Math.round((val / MAX_SIGNUP) * 100)}%`, background: "#eef3ff" }}
-                title={`${day}: ${val} signups`}
-              />
-            ))}
-          </div>
-          <div className="mt-1.5 flex gap-1.5">
-            {SIGNUP_DATA.map(({ day }) => (
-              <div key={day} className="flex-1 text-center text-[10px] text-[#9ca3af]">{day}</div>
-            ))}
-          </div>
-          <div className="mt-1 text-right text-[11px] text-[#9ca3af]">Hover bars for details</div>
+          <div className="mb-4 text-[13px] font-semibold text-[#111827]">Users by Plan</div>
+          {[
+            { label: "Free", count: stats.freeUsers, total: stats.totalUsers, color: "#9ca3af" },
+            { label: "Pro", count: stats.proUsers, total: stats.totalUsers, color: "#3b6ef8" },
+            { label: "Team", count: stats.teamUsers, total: stats.totalUsers, color: "#16a34a" },
+          ].map(({ label, count, total, color }) => {
+            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+            return (
+              <div key={label} className="mb-3 last:mb-0">
+                <div className="mb-1 flex justify-between text-[12px] text-[#4b5563]">
+                  <span>{label}</span>
+                  <span className="font-semibold">{count} ({pct}%)</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#f0f1f5]">
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Activity */}
+        {/* Activity feed */}
         <div className="rounded-xl border border-[#e4e6eb] bg-white p-4">
           <div className="mb-3 text-[13px] font-semibold text-[#111827]">Recent Activity</div>
-          {ACTIVITY.map(({ color, text, time }, i) => (
-            <div key={i} className="flex items-start gap-2.5 border-b border-[#edeef2] py-2 last:border-none">
-              <div className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
-              <div className="flex-1 text-[12px] leading-[1.55] text-[#4b5563]">{text}</div>
-              <div className="whitespace-nowrap pl-1.5 text-[11px] text-[#9ca3af]">{time}</div>
-            </div>
-          ))}
+          {activity.length === 0 && (
+            <div className="py-4 text-center text-[12px] text-[#9ca3af]">No recent activity</div>
+          )}
+          {activity.map((item, i) => {
+            const { Icon, bg, color } = activityIconMap[item.kind];
+            return (
+              <div key={i} className="flex items-start gap-2.5 border-b border-[#edeef2] py-2 last:border-none">
+                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded" style={{ background: bg, color }}>
+                  <Icon className="h-3 w-3" />
+                </div>
+                <div className="flex-1 text-[12px] leading-[1.55] text-[#4b5563]">{item.label}</div>
+                <div className="whitespace-nowrap pl-1.5 text-[11px] text-[#9ca3af]">
+                  {formatRelativeTime(item.at)}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* New users table */}
+      {/* Recent users table */}
       <div className="rounded-xl border border-[#e4e6eb] bg-white">
         <div className="flex items-center justify-between border-b border-[#e4e6eb] px-4 py-3">
-          <div className="text-[13px] font-semibold text-[#111827]">New Users (pending review)</div>
+          <div className="text-[13px] font-semibold text-[#111827]">Platform Summary</div>
           <Link
             href="/admin/users"
             className="flex items-center gap-1.5 rounded-md border border-[#e4e6eb] px-3 py-1.5 text-[12px] font-medium text-[#4b5563] hover:bg-[#f7f8fa]"
           >
-            <ExternalLink className="h-3 w-3" /> View all
+            <ExternalLink className="h-3 w-3" /> View users
           </Link>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="border-b border-[#e4e6eb]">
-                {["Name", "Email", "Plan", "Joined", "Status", ""].map((h) => (
-                  <th key={h} className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {NEW_USERS.map((u) => (
-                <tr key={u.email} className="border-b border-[#edeef2] last:border-none hover:bg-[#f7f8fa]">
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold" style={{ background: u.ibg, color: u.itc }}>{u.initials}</div>
-                      {u.name}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2.5 text-[#4b5563]">{u.email}</td>
-                  <td className="px-4 py-2.5"><span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${PLAN_BADGE[u.plan]}`}>{u.plan}</span></td>
-                  <td className="px-4 py-2.5 text-[#4b5563]">{u.joined}</td>
-                  <td className="px-4 py-2.5"><span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${STATUS_BADGE[u.status]}`}>{u.status}</span></td>
-                  <td className="px-4 py-2.5">
-                    <button onClick={() => toast("User details opened")} className="flex h-7 w-7 items-center justify-center rounded text-[#4b5563] hover:bg-[#f0f1f5]">
-                      <Eye className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="divide-y divide-[#edeef2]">
+          {[
+            { label: "Total registered users", value: stats.totalUsers.toLocaleString() },
+            { label: "New users this month", value: `+${stats.newUsersThisMonth}` },
+            { label: "Total presentations", value: stats.totalPresentations.toLocaleString() },
+            { label: "Total documents", value: stats.totalDocuments.toLocaleString() },
+            { label: "Total storage used", value: stats.storageFormatted },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex items-center justify-between px-4 py-3 text-[13px]">
+              <span className="text-[#4b5563]">{label}</span>
+              <span className="font-semibold text-[#111827]">{value}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
