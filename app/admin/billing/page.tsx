@@ -15,8 +15,8 @@ export default async function BillingPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-1 text-[17px] font-semibold text-admin-text">Billing & Plans</div>
-      <div className="mb-5 text-[12px] text-admin-muted">Manage subscription tiers and user plan distribution</div>
+      <div className="mb-1 text-[17px] font-semibold text-text-strong">Billing & Plans</div>
+      <div className="mb-5 text-[12px] text-text-muted">Manage subscription tiers and user plan distribution</div>
 
       {/* Metrics */}
       <div className="mb-5 grid grid-cols-4 gap-3 max-[1000px]:grid-cols-2">
@@ -26,10 +26,10 @@ export default async function BillingPage() {
           { label: "Team Users", val: stats.teamUsers.toLocaleString(), sub: stats.totalUsers > 0 ? `${Math.round((stats.teamUsers / stats.totalUsers) * 100)}% of total` : "0%" },
           { label: "Total Users", val: stats.totalUsers.toLocaleString(), sub: `+${stats.newUsersThisMonth} this month` },
         ].map(({ label, val, sub }) => (
-          <div key={label} className="rounded-xl border border-admin-border bg-admin-surface p-4">
-            <div className="mb-1.5 text-[11px] text-admin-muted">{label}</div>
-            <div className="text-[24px] font-bold leading-none tracking-tight text-admin-text">{val}</div>
-            <div className="mt-1.5 text-[11px] text-admin-muted">{sub}</div>
+          <div key={label} className="rounded-xl border border-border-soft bg-surface-1 p-4">
+            <div className="mb-1.5 text-[11px] text-text-muted">{label}</div>
+            <div className="text-[24px] font-bold leading-none tracking-tight text-text-strong">{val}</div>
+            <div className="mt-1.5 text-[11px] text-text-muted">{sub}</div>
           </div>
         ))}
       </div>
@@ -39,33 +39,34 @@ export default async function BillingPage() {
         {PLANS.map(({ key, name, price, desc, features, popular }) => (
           <div
             key={name}
-            className="rounded-xl border p-4 text-center"
-            style={popular ? { borderColor: "#3b6ef8", background: "#eef3ff" } : { borderColor: "var(--admin-border)", background: "var(--admin-surface)" }}
+            className={`rounded-xl border p-4 text-center ${
+              popular ? "border-brand bg-brand-tint" : "border-border-soft bg-surface-1"
+            }`}
           >
             {popular && (
-              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.8px]" style={{ color: "#3b6ef8" }}>
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.8px] text-brand">
                 Most Popular
               </div>
             )}
-            <div className="text-[13px] font-bold text-admin-text">{name}</div>
-            <div className="my-2 text-[26px] font-bold leading-none" style={{ color: "#3b6ef8" }}>
-              {price}<span className="text-[12px] font-normal text-admin-muted">/mo</span>
+            <div className="text-[13px] font-bold text-text-strong">{name}</div>
+            <div className="my-2 text-[26px] font-bold leading-none text-brand">
+              {price}<span className="text-[12px] font-normal text-text-muted">/mo</span>
             </div>
-            <div className="mb-1 text-[11px] text-admin-muted">{desc}</div>
-            <div className="mb-3 text-[18px] font-semibold text-admin-text">
+            <div className="mb-1 text-[11px] text-text-muted">{desc}</div>
+            <div className="mb-3 text-[18px] font-semibold text-text-strong">
               {(planCounts[key] ?? 0).toLocaleString()}{" "}
-              <span className="text-[12px] font-normal text-admin-muted">active users</span>
+              <span className="text-[12px] font-normal text-text-muted">active users</span>
             </div>
             {features.map((f) => (
-              <div key={f} className="flex items-center gap-1.5 border-b border-admin-divider py-1.5 text-left text-[12px] text-admin-body last:border-none">
-                <Check className="h-3.5 w-3.5 shrink-0 text-[#16a34a]" /> {f}
+              <div key={f} className="flex items-center gap-1.5 border-b border-border-soft py-1.5 text-left text-[12px] text-text-muted last:border-none">
+                <Check className="h-3.5 w-3.5 shrink-0 text-brand" /> {f}
               </div>
             ))}
           </div>
         ))}
       </div>
 
-      <div className="rounded-xl border border-admin-border bg-admin-surface px-4 py-6 text-center text-[13px] text-admin-muted">
+      <div className="rounded-xl border border-border-soft bg-surface-1 px-4 py-6 text-center text-[13px] text-text-muted">
         Payment transaction history requires a billing integration (e.g. Razorpay, Stripe).
         Connect a payment provider to view revenue and subscription events here.
       </div>
