@@ -34,56 +34,40 @@ export default async function ReportsPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-1 text-[17px] font-semibold text-[#111827]">Reports</div>
-      <div className="mb-5 text-[12px] text-[#9ca3af]">
-        Failed presentations and platform error logs
-      </div>
+      <div className="mb-1 text-[17px] font-semibold text-admin-text">Reports</div>
+      <div className="mb-5 text-[12px] text-admin-muted">Failed presentations and platform error logs</div>
 
-      <div className="overflow-hidden rounded-xl border border-[#e4e6eb] bg-white">
-        <div className="border-b border-[#e4e6eb] px-4 py-3">
-          <div className="text-[13px] font-semibold text-[#111827]">
+      <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface">
+        <div className="border-b border-admin-border px-4 py-3">
+          <div className="text-[13px] font-semibold text-admin-text">
             Failed Presentations ({errors.length})
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b border-[#e4e6eb]">
+              <tr className="border-b border-admin-border">
                 {["Presentation", "Owner", "Error", "Date"].map((h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.6px] text-[#9ca3af]"
-                  >
-                    {h}
-                  </th>
+                  <th key={h} className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.6px] text-admin-muted">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {errors.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">
+                  <td colSpan={4} className="px-4 py-10 text-center text-[13px] text-admin-muted">
                     No failed presentations — everything looks good
                   </td>
                 </tr>
               ) : (
                 errors.map((e) => (
-                  <tr
-                    key={e.id}
-                    className="border-b border-[#edeef2] last:border-none hover:bg-[#f7f8fa]"
-                  >
+                  <tr key={e.id} className="border-b border-admin-divider last:border-none hover:bg-admin-hover">
+                    <td className="px-4 py-3 font-medium text-admin-text">{e.name}</td>
+                    <td className="px-4 py-3 text-admin-body">{e.owner}</td>
                     <td className="px-4 py-3">
-                      <div className="text-[13px] font-medium text-[#111827]">{e.name}</div>
+                      <span className="rounded bg-[#fff1f1] px-2 py-0.5 text-[11px] text-[#dc2626]">{e.error_message}</span>
                     </td>
-                    <td className="px-4 py-3 text-[#4b5563]">{e.owner}</td>
-                    <td className="px-4 py-3">
-                      <span className="rounded bg-[#fff1f1] px-2 py-0.5 text-[11px] text-[#dc2626]">
-                        {e.error_message}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-[#4b5563]">
-                      {formatRelativeTime(e.created_at)}
-                    </td>
+                    <td className="px-4 py-3 text-admin-body">{formatRelativeTime(e.created_at)}</td>
                   </tr>
                 ))
               )}

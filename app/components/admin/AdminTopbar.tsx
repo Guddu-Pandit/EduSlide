@@ -21,9 +21,9 @@ export default function AdminTopbar({
   const shortName = displayName.split(" ").slice(0, 2).join(" ");
 
   return (
-    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-[#e4e6eb] bg-white px-5">
+    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-admin-border bg-admin-surface px-5">
       <div className="flex items-center gap-2">
-        <Link href="/admin" className="text-[15px] font-semibold text-[#111827]">
+        <Link href="/admin" className="text-[15px] font-semibold text-admin-text">
           Edu<span style={{ color: "#3b6ef8" }}>Slide</span>
         </Link>
         <span
@@ -37,8 +37,7 @@ export default function AdminTopbar({
       <div className="flex items-center gap-2.5">
         <Link
           href="/dashboard"
-          className="flex items-center gap-1.5 rounded-lg border border-border-soft bg-surface-2 px-3 py-1.5 text-[13px] font-semibold text-text-muted transition-opacity hover:opacity-80"
-          style={{ borderColor: "#e4e6eb", background: "#f7f8fa", color: "#4b5563" }}
+          className="flex items-center gap-1.5 rounded-lg border border-admin-border bg-admin-input px-3 py-1.5 text-[13px] font-semibold text-admin-body transition-opacity hover:opacity-80"
           title="Back to Dashboard"
         >
           <LayoutDashboard className="h-[15px] w-[15px]" />
@@ -46,19 +45,19 @@ export default function AdminTopbar({
         </Link>
         <Link
           href="/admin/notifications"
-          className="relative flex h-8 w-8 items-center justify-center rounded-md text-[#4b5563] hover:bg-[#f7f8fa]"
+          className="relative flex h-8 w-8 items-center justify-center rounded-md text-admin-body hover:bg-admin-hover"
           title="Notifications"
         >
           <Bell className="h-[18px] w-[18px]" />
           <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-500 ring-[1.5px] ring-white" />
         </Link>
         <button
-          className="flex h-8 w-8 items-center justify-center rounded-md text-[#4b5563] hover:bg-[#f7f8fa]"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-admin-body hover:bg-admin-hover"
           title="Search"
         >
           <Search className="h-[18px] w-[18px]" />
         </button>
-        <span className="text-[13px] text-[#4b5563]">{shortName}</span>
+        <span className="text-[13px] text-admin-body">{shortName}</span>
         <div
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
           style={{ background: "#eef3ff", color: "#3b6ef8" }}

@@ -18,6 +18,17 @@
   --border-soft: #e4e7eb;
   --border-mid: #cbd1d9;
   --border-strong: #b7bfc9;
+
+  /* Admin panel */
+  --admin-surface: #ffffff;
+  --admin-bg: #f0f1f5;
+  --admin-input: #f7f8fa;
+  --admin-border: #e4e6eb;
+  --admin-divider: #edeef2;
+  --admin-text: #111827;
+  --admin-body: #4b5563;
+  --admin-muted: #9ca3af;
+  --admin-hover: #f7f8fa;
 }
 
 @theme inline {
@@ -40,6 +51,17 @@
   --color-border-soft: var(--border-soft);
   --color-border-mid: var(--border-mid);
   --color-border-strong: var(--border-strong);
+
+  /* Admin panel */
+  --color-admin-surface: var(--admin-surface);
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-input: var(--admin-input);
+  --color-admin-border: var(--admin-border);
+  --color-admin-divider: var(--admin-divider);
+  --color-admin-text: var(--admin-text);
+  --color-admin-body: var(--admin-body);
+  --color-admin-muted: var(--admin-muted);
+  --color-admin-hover: var(--admin-hover);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,6 +81,17 @@
     --border-strong: #454a54;
 
     --brand-tint: #143229;
+
+    /* Admin panel */
+    --admin-surface: #111317;
+    --admin-bg: #0a0b0d;
+    --admin-input: #17191e;
+    --admin-border: #252830;
+    --admin-divider: #1e2128;
+    --admin-text: #f2f3f5;
+    --admin-body: #9aa1ab;
+    --admin-muted: #6b7280;
+    --admin-hover: #17191e;
   }
 }
 

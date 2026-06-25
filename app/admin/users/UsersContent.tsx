@@ -15,16 +15,11 @@ const PLAN_BADGE: Record<string, string> = {
 
 function getInitials(name: string | null, email: string) {
   const source = name || email;
-  return source
-    .split(/[\s@.]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((s) => s[0]?.toUpperCase())
-    .join("");
+  return source.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("");
 }
 
 const inputCls =
-  "h-9 w-full rounded-lg border border-[#e4e6eb] bg-[#f7f8fa] px-3 text-[13px] text-[#111827] outline-none focus:border-[#3b6ef8] focus:ring-2 focus:ring-[#eef3ff]";
+  "h-9 w-full rounded-lg border border-admin-border bg-admin-input px-3 text-[13px] text-admin-text outline-none focus:border-[#3b6ef8] focus:ring-2 focus:ring-[#eef3ff]";
 
 export default function UsersContent({ users }: { users: AdminUser[] }) {
   const toast = useAdminToast();
@@ -57,24 +52,19 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
     startTransition(async () => {
       const { error } = await adminCreateUser(fd);
       if (error) toast(`Error: ${error}`);
-      else {
-        toast(`User ${fd.get("email")} created`);
-        setShowModal(false);
-      }
+      else { toast(`User ${fd.get("email")} created`); setShowModal(false); }
     });
   }
 
   return (
     <div className="p-6">
-      <div className="mb-1 text-[17px] font-semibold text-[#111827]">User Management</div>
-      <div className="mb-5 text-[12px] text-[#9ca3af]">
-        View, edit, suspend, or delete platform users
-      </div>
+      <div className="mb-1 text-[17px] font-semibold text-admin-text">User Management</div>
+      <div className="mb-5 text-[12px] text-admin-muted">View, edit, suspend, or delete platform users</div>
 
       {/* Search bar */}
       <div className="mb-4 flex items-center gap-2.5">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#9ca3af]" />
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-admin-muted" />
           <input
             className={`${inputCls} pl-8`}
             placeholder="Search by name or email…"
@@ -85,7 +75,7 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
         <select
           value={planFilter}
           onChange={(e) => setPlanFilter(e.target.value)}
-          className="h-9 rounded-lg border border-[#e4e6eb] bg-white px-2.5 text-[13px] text-[#4b5563] outline-none"
+          className="h-9 rounded-lg border border-admin-border bg-admin-surface px-2.5 text-[13px] text-admin-body outline-none"
         >
           <option value="">All plans</option>
           <option value="free">Free</option>
@@ -102,32 +92,21 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-[#e4e6eb] bg-white">
+      <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface">
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b border-[#e4e6eb]">
-                {["User", "Email", "Plan", "Role", "Presentations", "Joined", "Actions"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.6px] text-[#9ca3af]"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+              <tr className="border-b border-admin-border">
+                {["User", "Email", "Plan", "Role", "Presentations", "Joined", "Actions"].map((h) => (
+                  <th key={h} className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.6px] text-admin-muted">{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {filtered.map((u) => {
                 const initials = getInitials(u.full_name, u.email);
-                const planKey = u.role === "admin" ? "admin" : u.plan;
                 return (
-                  <tr
-                    key={u.id}
-                    className="border-b border-[#edeef2] last:border-none hover:bg-[#f7f8fa]"
-                  >
+                  <tr key={u.id} className="border-b border-admin-divider last:border-none hover:bg-admin-hover">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div
@@ -136,39 +115,29 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
                         >
                           {initials || "?"}
                         </div>
-                        <span className="font-medium text-[#111827]">
-                          {u.full_name || "—"}
-                        </span>
+                        <span className="font-medium text-admin-text">{u.full_name || "—"}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[#4b5563]">{u.email}</td>
+                    <td className="px-4 py-3 text-admin-body">{u.email}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded px-2 py-0.5 text-[10px] font-semibold ${PLAN_BADGE[u.plan] ?? PLAN_BADGE.free}`}
-                      >
+                      <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${PLAN_BADGE[u.plan] ?? PLAN_BADGE.free}`}>
                         {u.plan}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded px-2 py-0.5 text-[10px] font-semibold ${u.role === "admin" ? "bg-[#f3e8ff] text-[#7c3aed]" : "bg-[#f0f1f5] text-[#9ca3af]"}`}
-                      >
+                      <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${u.role === "admin" ? "bg-[#f3e8ff] text-[#7c3aed]" : "bg-[#f0f1f5] text-[#9ca3af]"}`}>
                         {u.role}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[#4b5563]">{u.presentations_count}</td>
-                    <td className="px-4 py-3 text-[#4b5563]">
-                      {new Date(u.created_at).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                    <td className="px-4 py-3 text-admin-body">{u.presentations_count}</td>
+                    <td className="px-4 py-3 text-admin-body">
+                      {new Date(u.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => toast(`${u.email} — suspend not implemented`)}
-                          className="flex h-7 w-7 items-center justify-center rounded text-[#4b5563] hover:bg-[#f0f1f5]"
+                          className="flex h-7 w-7 items-center justify-center rounded text-admin-body hover:bg-admin-input"
                           title="Suspend"
                         >
                           <Ban className="h-3.5 w-3.5" />
@@ -176,7 +145,7 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
                         <button
                           onClick={() => handleDelete(u)}
                           disabled={isPending}
-                          className="flex h-7 w-7 items-center justify-center rounded text-[#4b5563] hover:bg-[#fff1f1] hover:text-[#dc2626] disabled:opacity-50"
+                          className="flex h-7 w-7 items-center justify-center rounded text-admin-body hover:bg-[#fff1f1] hover:text-[#dc2626] disabled:opacity-50"
                           title="Delete"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -190,68 +159,40 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
           </table>
         </div>
       </div>
-      <div className="mt-2 text-[12px] text-[#9ca3af]">
+      <div className="mt-2 text-[12px] text-admin-muted">
         Showing {filtered.length} of {users.length} users
       </div>
 
       {/* Add User Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35">
-          <div className="w-[420px] max-w-[90vw] rounded-xl bg-white p-6 shadow-2xl">
+          <div className="w-[420px] max-w-[90vw] rounded-xl border border-admin-border bg-admin-surface p-6 shadow-2xl">
             <div className="mb-1 flex items-center justify-between">
-              <div className="text-[15px] font-semibold text-[#111827]">Add new user</div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex h-7 w-7 items-center justify-center rounded text-[#9ca3af] hover:bg-[#f0f1f5]"
-              >
+              <div className="text-[15px] font-semibold text-admin-text">Add new user</div>
+              <button onClick={() => setShowModal(false)} className="flex h-7 w-7 items-center justify-center rounded text-admin-muted hover:bg-admin-input">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="mb-4 text-[12px] text-[#9ca3af]">
-              Create a user account directly from admin
-            </div>
+            <div className="mb-4 text-[12px] text-admin-muted">Create a user account directly from admin</div>
             <form onSubmit={handleAddUser} className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
-                  Full name
-                </label>
-                <input
-                  name="full_name"
-                  className={inputCls}
-                  placeholder="e.g. Priya Sharma"
-                />
+                <label className="mb-1 block text-[12px] font-medium text-admin-body">Full name</label>
+                <input name="full_name" className={inputCls} placeholder="e.g. Priya Sharma" />
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
+                <label className="mb-1 block text-[12px] font-medium text-admin-body">
                   Email <span className="text-[#dc2626]">*</span>
                 </label>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  className={inputCls}
-                  placeholder="user@school.edu"
-                />
+                <input name="email" type="email" required className={inputCls} placeholder="user@school.edu" />
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
+                <label className="mb-1 block text-[12px] font-medium text-admin-body">
                   Password <span className="text-[#dc2626]">*</span>
                 </label>
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  minLength={8}
-                  className={inputCls}
-                  placeholder="Min 8 characters"
-                />
+                <input name="password" type="password" required minLength={8} className={inputCls} placeholder="Min 8 characters" />
               </div>
               <div className="col-span-2 mt-3 flex justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="rounded-lg border border-[#e4e6eb] px-4 py-2 text-[13px] font-medium text-[#4b5563] hover:bg-[#f7f8fa]"
-                >
+                <button type="button" onClick={() => setShowModal(false)} className="rounded-lg border border-admin-border px-4 py-2 text-[13px] font-medium text-admin-body hover:bg-admin-hover">
                   Cancel
                 </button>
                 <button

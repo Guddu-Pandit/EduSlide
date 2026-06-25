@@ -37,9 +37,9 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Manage",
     items: [
-      { href: "/admin/users", label: "Users", icon: Users, badge: 12 },
+      { href: "/admin/users", label: "Users", icon: Users },
       { href: "/admin/content", label: "Content", icon: Files },
-      { href: "/admin/reports", label: "Reports", icon: Flag, badge: 3, badgeWarn: true },
+      { href: "/admin/reports", label: "Reports", icon: Flag, badgeWarn: true },
     ],
   },
   {
@@ -63,11 +63,11 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-[220px] shrink-0 flex-col overflow-y-auto border-r border-[#e4e6eb] bg-white">
+    <aside className="flex w-[220px] shrink-0 flex-col overflow-y-auto border-r border-admin-border bg-admin-surface">
       <div className="flex-1 py-3">
         {NAV_SECTIONS.map(({ label, items }) => (
           <div key={label}>
-            <div className="px-4 pb-1.5 pt-3.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#9ca3af]">
+            <div className="px-4 pb-1.5 pt-3.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-admin-muted">
               {label}
             </div>
             {items.map(({ href, label: itemLabel, icon: Icon, badge, badgeWarn, exact }) => {
@@ -79,7 +79,7 @@ export default function AdminSidebar() {
                   className={`flex items-center gap-2.5 px-4 py-2 text-[13px] transition-colors ${
                     active
                       ? "bg-[#eef3ff] font-medium text-[#3b6ef8]"
-                      : "text-[#4b5563] hover:bg-[#f7f8fa]"
+                      : "text-admin-body hover:bg-admin-hover"
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -99,17 +99,17 @@ export default function AdminSidebar() {
         ))}
       </div>
 
-      <div className="border-t border-[#e4e6eb]">
+      <div className="border-t border-admin-border">
         <form action={logout}>
           <button
             type="submit"
-            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#4b5563] hover:bg-[#f7f8fa]"
+            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] text-admin-body hover:bg-admin-hover"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             Sign out
           </button>
         </form>
-        <div className="px-4 py-2.5 text-[11px] text-[#9ca3af]">Admin Panel v2.4.0</div>
+        <div className="px-4 py-2.5 text-[11px] text-admin-muted">Admin Panel v2.4.0</div>
       </div>
     </aside>
   );
