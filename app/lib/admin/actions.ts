@@ -35,6 +35,15 @@ export async function adminCreateUser(formData: FormData): Promise<{ error?: str
   return {};
 }
 
+export async function adminSetRole(userId: string, role: "admin" | "user"): Promise<{ error?: string }> {
+  const admin = createAdminClient();
+  const { error } = await admin.from("profiles").update({ role }).eq("id", userId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/users");
+  revalidatePath("/admin");
+  return {};
+}
+
 export async function adminDeleteDocument(docId: string): Promise<{ error?: string }> {
   const admin = createAdminClient();
   const { error } = await admin.from("documents").delete().eq("id", docId);

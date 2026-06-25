@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Ban, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
+import { Ban, Plus, Search, Shield, ShieldCheck, Trash2, UserPlus, X } from "lucide-react";
 import { useAdminToast } from "@/app/components/admin/AdminToast";
-import { adminDeleteUser, adminCreateUser } from "@/app/lib/admin/actions";
+import { adminDeleteUser, adminCreateUser, adminSetRole } from "@/app/lib/admin/actions";
 import type { AdminUser } from "@/app/lib/admin/queries";
 
 const PLAN_BADGE: Record<string, string> = {
@@ -43,6 +43,19 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
       const { error } = await adminDeleteUser(user.id);
       if (error) toast(`Error: ${error}`);
       else toast(`${user.email} deleted`);
+    });
+  }
+
+  function handleRoleToggle(user: AdminUser) {
+    const newRole = user.role === "admin" ? "user" : "admin";
+    const msg = newRole === "admin"
+      ? `Make ${user.email} an admin?`
+      : `Remove admin from ${user.email}?`;
+    if (!confirm(msg)) return;
+    startTransition(async () => {
+      const { error } = await adminSetRole(user.id, newRole);
+      if (error) toast(`Error: ${error}`);
+      else toast(newRole === "admin" ? `${user.email} is now admin` : `${user.email} is now a regular user`);
     });
   }
 
@@ -131,6 +144,18 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleRoleToggle(u)}
+                          disabled={isPending}
+                          className={`flex h-7 w-7 items-center justify-center rounded-lg disabled:opacity-50 ${
+                            u.role === "admin"
+                              ? "text-brand hover:bg-brand-tint"
+                              : "text-text-muted hover:bg-surface-3 hover:text-brand"
+                          }`}
+                          title={u.role === "admin" ? "Remove admin" : "Make admin"}
+                        >
+                          {u.role === "admin" ? <ShieldCheck className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
+                        </button>
                         <button
                           onClick={() => toast(`${u.email} — suspend not implemented`)}
                           className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted hover:bg-surface-3 hover:text-text-strong"
