@@ -18,7 +18,7 @@ interface RazorpayFailedResponse {
     step: string;
     reason: string;
     metadata: {
-      order_id: string;
+      order_id?: string;
       payment_id?: string;
     };
   };
@@ -33,6 +33,23 @@ function loadRazorpayScript(): Promise<boolean> {
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
+}
+
+async function recordFailure(payload: {
+  razorpay_order_id: string;
+  razorpay_payment_id: string | null;
+  plan: Plan;
+  error_description: string;
+}) {
+  try {
+    await fetch("/api/razorpay/failed", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    // network error — nothing we can do client-side
+  }
 }
 
 interface Props {
@@ -87,19 +104,22 @@ export function RazorpayButton({ plan, label, className }: Props) {
           }
         },
 
+        // Razorpay fires this when a payment attempt is made but rejected
+        // (card declined, bank error, etc.) — modal stays open for retry
         "payment.failed": async (response: RazorpayFailedResponse) => {
-          // Record the failed attempt silently — don't await, just fire
-          fetch("/api/razorpay/failed", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id: response.error.metadata.order_id,
-              razorpay_payment_id: response.error.metadata.payment_id ?? null,
-              plan,
-              error_description: response.error.description || response.error.reason || "Payment failed",
-            }),
+          // metadata.order_id can be missing in some failure types; fall back to our known orderId
+          const orderId = response.error.metadata?.order_id ?? order.orderId;
+          const description =
+            response.error.description ||
+            response.error.reason ||
+            "Payment failed";
+
+          await recordFailure({
+            razorpay_order_id: orderId,
+            razorpay_payment_id: response.error.metadata?.payment_id ?? null,
+            plan,
+            error_description: description,
           });
-          // Razorpay keeps the modal open for retry after failure — don't reset loading
         },
 
         modal: {

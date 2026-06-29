@@ -19,7 +19,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       fullName={profile.full_name}
       email={user.email}
       plan={profile.plan}
-      planExpiresAt={profile.plan_expires_at}
       role={profile.role}
       presentationsCount={presentations.length}
     >

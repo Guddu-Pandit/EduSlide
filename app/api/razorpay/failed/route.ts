@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await supabase.from("payments").insert({
+    const { error: insertError } = await supabase.from("payments").insert({
       user_id: user.id,
       razorpay_order_id,
       razorpay_payment_id: razorpay_payment_id ?? null,
@@ -27,8 +27,14 @@ export async function POST(request: Request) {
       error_description: error_description ?? null,
     });
 
+    if (insertError) {
+      console.error("Failed to record payment failure:", insertError.message);
+      return Response.json({ error: "Could not save record" }, { status: 500 });
+    }
+
     return Response.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error("Unexpected error in /api/razorpay/failed:", err);
     return Response.json({ error: "Could not record failure" }, { status: 500 });
   }
 }

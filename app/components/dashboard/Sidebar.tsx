@@ -85,7 +85,6 @@ export default function Sidebar({
   fullName,
   email,
   plan,
-  planExpiresAt,
   presentationsCount,
   mobileOpen,
   onClose,
@@ -93,7 +92,6 @@ export default function Sidebar({
   fullName: string | null;
   email: string | undefined;
   plan: Plan;
-  planExpiresAt: string | null;
   presentationsCount: number;
   mobileOpen: boolean;
   onClose: () => void;
@@ -238,12 +236,7 @@ export default function Sidebar({
               <>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-semibold text-text-strong">{displayName}</span>
-                  <span className="block text-[11px] text-text-muted">
-                    {PLAN_LABEL[plan]}
-                    {planExpiresAt && plan !== "free" && (
-                      <> · renews {new Date(planExpiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</>
-                    )}
-                  </span>
+                  <span className="block text-[11px] text-text-muted">{PLAN_LABEL[plan]}</span>
                 </span>
                 <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-text-muted" />
               </>
