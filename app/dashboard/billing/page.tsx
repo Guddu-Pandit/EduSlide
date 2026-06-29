@@ -3,7 +3,6 @@
 import { Check, Crown, Receipt, Sparkles, Users, XCircle, Zap } from "lucide-react";
 import { getDashboardStats, getPaymentHistory, getProfile } from "@/app/lib/dashboard/queries";
 import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
-import { upgradePlan } from "@/app/lib/dashboard/actions";
 import { PLAN_LIMITS, PLAN_ORDER, presentationUsage, storageUsage, type Plan } from "@/app/lib/dashboard/plan";
 import { formatBytes } from "@/app/lib/dashboard/format";
 import { CardSkeleton } from "@/app/components/dashboard/Skeleton";
@@ -96,8 +95,8 @@ export default function BillingPage() {
           const planInfo = PLAN_LIMITS[planKey];
           const Icon = PLAN_ICON[planKey];
           const isCurrent = profile.plan === planKey;
-          const isPopular = planKey === POPULAR_PLAN && !isCurrent;
           const isUpgrade = PLAN_ORDER.indexOf(planKey) > PLAN_ORDER.indexOf(profile.plan);
+          const isPopular = planKey === POPULAR_PLAN && isUpgrade;
 
           return (
             <div
@@ -157,24 +156,25 @@ export default function BillingPage() {
                 >
                   Current plan
                 </button>
+              ) : !isUpgrade && planInfo.amountInPaise > 0 ? (
+                // Lower paid tier — already covered by current plan
+                <div className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-3.5 py-2.5 text-[13px] font-semibold text-emerald-700">
+                  <Check className="h-3.5 w-3.5" />
+                  Included in your {PLAN_LIMITS[profile.plan].label} plan
+                </div>
               ) : planInfo.amountInPaise > 0 ? (
                 <RazorpayButton
                   plan={planKey}
-                  label={isUpgrade ? `Upgrade to ${planInfo.label}` : `Switch to ${planInfo.label}`}
+                  label={`Upgrade to ${planInfo.label}`}
                   className={`w-full rounded-lg px-3.5 py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 ${
                     isPopular ? "bg-brand text-white" : "border border-border-mid bg-surface-1 text-text-strong"
                   }`}
                 />
               ) : (
-                <form action={upgradePlan}>
-                  <input type="hidden" name="plan" value={planKey} />
-                  <button
-                    type="submit"
-                    className="w-full rounded-lg border border-border-mid bg-surface-1 px-3.5 py-2.5 text-[13px] font-semibold text-text-strong transition-opacity hover:opacity-90"
-                  >
-                    Switch to Free
-                  </button>
-                </form>
+                // Free plan — no action needed; auto-applied when paid plan expires
+                <div className="rounded-lg border border-border-soft px-3.5 py-2.5 text-center text-[12px] text-text-muted">
+                  Applied automatically on expiry
+                </div>
               )}
             </div>
           );
