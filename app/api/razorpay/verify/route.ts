@@ -31,7 +31,15 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await supabase.from("profiles").update({ plan: plan as Plan }).eq("id", user.id);
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update({ plan: plan as Plan })
+      .eq("id", user.id);
+
+    if (dbError) {
+      console.error("Failed to update plan in DB:", dbError.message);
+      return Response.json({ error: "Plan update failed after payment" }, { status: 500 });
+    }
 
     revalidatePath("/dashboard/billing");
     revalidatePath("/dashboard");
