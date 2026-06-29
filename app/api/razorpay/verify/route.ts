@@ -51,6 +51,8 @@ export async function POST(request: Request) {
       razorpay_payment_id,
       plan,
       amount_paise: planInfo.amountInPaise,
+      status: "success",
+      error_description: null,
     });
 
     revalidatePath("/dashboard/billing");

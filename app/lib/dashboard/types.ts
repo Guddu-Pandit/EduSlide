@@ -21,9 +21,11 @@ export interface PaymentRow {
   id: string;
   user_id: string;
   razorpay_order_id: string;
-  razorpay_payment_id: string;
+  razorpay_payment_id: string | null;
   plan: Plan;
   amount_paise: number;
+  status: "success" | "failed";
+  error_description: string | null;
   created_at: string;
 }
 

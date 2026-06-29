@@ -192,7 +192,10 @@ export async function convertDocument(formData: FormData) {
 
   if (!doc) toastRedirect("/dashboard/documents", "Document not found");
 
-  const maxSlides = await getMaxSlides(supabase, user.id);
+  const planMax = await getMaxSlides(supabase, user.id);
+  const requested = parseInt((formData.get("slideCount") as string) || "0", 10);
+  const maxSlides = requested > 0 ? Math.min(requested, planMax) : planMax;
+
   const { data: presentation } = await supabase
     .from("presentations")
     .insert({

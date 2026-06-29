@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Crown, Receipt, Sparkles, Users, Zap } from "lucide-react";
+import { Check, Crown, Receipt, Sparkles, Users, XCircle, Zap } from "lucide-react";
 import { getDashboardStats, getPaymentHistory, getProfile } from "@/app/lib/dashboard/queries";
 import { useDashboardQuery } from "@/app/lib/dashboard/useDashboardQuery";
 import { upgradePlan } from "@/app/lib/dashboard/actions";
@@ -200,13 +200,14 @@ export default function BillingPage() {
                   <th className="px-4 py-3 text-left font-semibold text-text-muted">Date</th>
                   <th className="px-4 py-3 text-left font-semibold text-text-muted">Plan</th>
                   <th className="px-4 py-3 text-left font-semibold text-text-muted">Amount</th>
-                  <th className="px-4 py-3 text-left font-semibold text-text-muted">Payment ID</th>
+                  <th className="px-4 py-3 text-left font-semibold text-text-muted">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold text-text-muted">Details</th>
                 </tr>
               </thead>
               <tbody>
                 {payments.map((p) => (
                   <tr key={p.id} className="border-b border-border-soft last:border-none hover:bg-surface-2">
-                    <td className="px-4 py-3 text-text-muted">
+                    <td className="px-4 py-3 text-text-muted whitespace-nowrap">
                       {new Date(p.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </td>
                     <td className="px-4 py-3">
@@ -214,8 +215,33 @@ export default function BillingPage() {
                         {p.plan}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-text-strong">{formatPaise(p.amount_paise)}</td>
-                    <td className="px-4 py-3 font-mono text-[11px] text-text-muted">{p.razorpay_payment_id}</td>
+                    <td className="px-4 py-3 font-semibold text-text-strong whitespace-nowrap">
+                      {p.status === "failed" ? (
+                        <span className="text-text-muted line-through">{formatPaise(p.amount_paise)}</span>
+                      ) : (
+                        formatPaise(p.amount_paise)
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.status === "success" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Success
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold text-red-600">
+                          <XCircle className="h-3 w-3" />
+                          Failed
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-[11px] text-text-muted max-w-[180px]">
+                      {p.status === "success"
+                        ? p.razorpay_payment_id
+                          ? <span className="font-mono">{p.razorpay_payment_id}</span>
+                          : "—"
+                        : p.error_description ?? "Payment declined"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -10,6 +10,20 @@ declare global {
   }
 }
 
+interface RazorpayFailedResponse {
+  error: {
+    code: string;
+    description: string;
+    source: string;
+    step: string;
+    reason: string;
+    metadata: {
+      order_id: string;
+      payment_id?: string;
+    };
+  };
+}
+
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     if (window.Razorpay) { resolve(true); return; }
@@ -34,7 +48,11 @@ export function RazorpayButton({ plan, label, className }: Props) {
     setLoading(true);
     try {
       const loaded = await loadRazorpayScript();
-      if (!loaded) { alert("Failed to load payment gateway. Please try again."); return; }
+      if (!loaded) {
+        alert("Failed to load payment gateway. Please try again.");
+        setLoading(false);
+        return;
+      }
 
       const order = await createRazorpayOrder(plan);
 
@@ -47,6 +65,7 @@ export function RazorpayButton({ plan, label, className }: Props) {
         order_id: order.orderId,
         prefill: { name: order.prefillName, email: order.prefillEmail },
         theme: { color: "#6366f1" },
+
         handler: async (response: {
           razorpay_order_id: string;
           razorpay_payment_id: string;
@@ -59,14 +78,33 @@ export function RazorpayButton({ plan, label, className }: Props) {
           });
 
           if (res.ok) {
-            // Hard redirect so the server layout re-runs and picks up the new plan
-            window.location.href = "/dashboard/billing?toast=" + encodeURIComponent(`Upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`);
+            window.location.href =
+              "/dashboard/billing?toast=" +
+              encodeURIComponent(`Upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`);
           } else {
             alert("Payment verification failed. Contact support if your money was deducted.");
             setLoading(false);
           }
         },
-        modal: { ondismiss: () => setLoading(false) },
+
+        "payment.failed": async (response: RazorpayFailedResponse) => {
+          // Record the failed attempt silently — don't await, just fire
+          fetch("/api/razorpay/failed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.error.metadata.order_id,
+              razorpay_payment_id: response.error.metadata.payment_id ?? null,
+              plan,
+              error_description: response.error.description || response.error.reason || "Payment failed",
+            }),
+          });
+          // Razorpay keeps the modal open for retry after failure — don't reset loading
+        },
+
+        modal: {
+          ondismiss: () => setLoading(false),
+        },
       };
 
       new window.Razorpay(options).open();
