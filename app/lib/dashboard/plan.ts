@@ -13,6 +13,7 @@ export const PLAN_LIMITS: Record<
     storageBytes: number | null;
     maxSlides: number;
     price: string;
+    amountInPaise: number;
     features: string[];
   }
 > = {
@@ -22,7 +23,8 @@ export const PLAN_LIMITS: Record<
     presentationLimit: { count: 2 },
     storageBytes: 50 * 1024 * 1024,
     maxSlides: 3,
-    price: "$0 / month",
+    price: "₹0 / month",
+    amountInPaise: 0,
     features: [
       "2 presentations / week",
       "Up to 3 slides per deck",
@@ -37,7 +39,8 @@ export const PLAN_LIMITS: Record<
     presentationLimit: { count: 5 },
     storageBytes: 150 * 1024 * 1024,
     maxSlides: 8,
-    price: "$12 / month",
+    price: "₹499 / month",
+    amountInPaise: 49900,
     features: [
       "5 presentations / week",
       "Up to 8 slides per deck",
@@ -53,7 +56,8 @@ export const PLAN_LIMITS: Record<
     presentationLimit: null,
     storageBytes: null,
     maxSlides: 15,
-    price: "$39 / month",
+    price: "₹2,499 / month",
+    amountInPaise: 249900,
     features: [
       "Unlimited presentations",
       "Up to 15 slides per deck",
