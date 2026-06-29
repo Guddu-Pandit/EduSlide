@@ -67,8 +67,8 @@ export default async function BillingPage() {
       </div>
 
       <div className="rounded-xl border border-border-soft bg-surface-1 px-4 py-6 text-center text-[13px] text-text-muted">
-        Payment transaction history requires a billing integration (e.g. Razorpay, Stripe).
-        Connect a payment provider to view revenue and subscription events here.
+        Payments are processed via <span className="font-semibold text-text-strong">Razorpay</span> (test mode).
+        Transaction history will appear here once a payments table is added to the database.
       </div>
     </div>
   );

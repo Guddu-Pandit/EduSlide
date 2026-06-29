@@ -8,11 +8,24 @@ export interface ProfileRow {
   full_name: string | null;
   role: string;
   plan: Plan;
+  plan_expires_at: string | null;
   institution: string | null;
   default_template: string;
   speaker_notes_default: boolean;
   email_on_completion: boolean;
   auto_delete_uploads: boolean;
+  created_at: string;
+}
+
+export interface PaymentRow {
+  id: string;
+  user_id: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string | null;
+  plan: Plan;
+  amount_paise: number;
+  status: "success" | "failed";
+  error_description: string | null;
   created_at: string;
 }
 
