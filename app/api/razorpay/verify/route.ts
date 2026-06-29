@@ -31,15 +31,27 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { error: dbError } = await supabase
+    const planInfo = PLAN_LIMITS[plan as Plan];
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+    const { error: profileError } = await supabase
       .from("profiles")
-      .update({ plan: plan as Plan })
+      .update({ plan: plan as Plan, plan_expires_at: expiresAt.toISOString() })
       .eq("id", user.id);
 
-    if (dbError) {
-      console.error("Failed to update plan in DB:", dbError.message);
+    if (profileError) {
+      console.error("Failed to update plan in DB:", profileError.message);
       return Response.json({ error: "Plan update failed after payment" }, { status: 500 });
     }
+
+    await supabase.from("payments").insert({
+      user_id: user.id,
+      razorpay_order_id,
+      razorpay_payment_id,
+      plan,
+      amount_paise: planInfo.amountInPaise,
+    });
 
     revalidatePath("/dashboard/billing");
     revalidatePath("/dashboard");

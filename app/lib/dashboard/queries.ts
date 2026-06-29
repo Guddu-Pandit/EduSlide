@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   DocumentRow,
   DocumentWithCount,
+  PaymentRow,
   PresentationRow,
   PresentationStatus,
   ProfileRow,
@@ -18,7 +19,29 @@ export async function getProfile(
     .single();
 
   if (error || !data) throw new Error("Could not load profile");
+
+  // Auto-downgrade to free if the paid plan has expired
+  if (data.plan !== "free" && data.plan_expires_at && new Date(data.plan_expires_at) < new Date()) {
+    await supabase
+      .from("profiles")
+      .update({ plan: "free", plan_expires_at: null })
+      .eq("id", userId);
+    return { ...data, plan: "free", plan_expires_at: null } as ProfileRow;
+  }
+
   return data as ProfileRow;
+}
+
+export async function getPaymentHistory(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<PaymentRow[]> {
+  const { data } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  return (data ?? []) as PaymentRow[];
 }
 
 export interface DashboardData {

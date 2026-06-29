@@ -10,6 +10,7 @@ export default function DashboardShell({
   fullName,
   email,
   plan,
+  planExpiresAt,
   role,
   presentationsCount,
   children,
@@ -17,6 +18,7 @@ export default function DashboardShell({
   fullName: string | null;
   email: string | undefined;
   plan: Plan;
+  planExpiresAt: string | null;
   role: string;
   presentationsCount: number;
   children: React.ReactNode;
@@ -29,6 +31,7 @@ export default function DashboardShell({
         fullName={fullName}
         email={email}
         plan={plan}
+        planExpiresAt={planExpiresAt}
         presentationsCount={presentationsCount}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}

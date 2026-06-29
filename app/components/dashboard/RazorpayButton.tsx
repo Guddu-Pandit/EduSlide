@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createRazorpayOrder } from "@/app/lib/dashboard/razorpay-actions";
 import type { Plan } from "@/app/lib/dashboard/plan";
@@ -29,7 +28,6 @@ interface Props {
 }
 
 export function RazorpayButton({ plan, label, className }: Props) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
@@ -61,10 +59,11 @@ export function RazorpayButton({ plan, label, className }: Props) {
           });
 
           if (res.ok) {
-            router.refresh();
-            router.push("/dashboard/billing?toast=" + encodeURIComponent(`Upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`));
+            // Hard redirect so the server layout re-runs and picks up the new plan
+            window.location.href = "/dashboard/billing?toast=" + encodeURIComponent(`Upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`);
           } else {
             alert("Payment verification failed. Contact support if your money was deducted.");
+            setLoading(false);
           }
         },
         modal: { ondismiss: () => setLoading(false) },
