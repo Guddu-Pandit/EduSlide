@@ -7,6 +7,7 @@ import { upgradePlan } from "@/app/lib/dashboard/actions";
 import { PLAN_LIMITS, PLAN_ORDER, presentationUsage, storageUsage, type Plan } from "@/app/lib/dashboard/plan";
 import { formatBytes } from "@/app/lib/dashboard/format";
 import { CardSkeleton } from "@/app/components/dashboard/Skeleton";
+import { RazorpayButton } from "@/app/components/dashboard/RazorpayButton";
 
 const PLAN_ICON: Record<Plan, typeof Sparkles> = { free: Sparkles, pro: Zap, team: Users };
 const POPULAR_PLAN: Plan = "pro";
@@ -67,7 +68,7 @@ export default function BillingPage() {
         </div>
 
         <p className="text-[13px] text-text-muted">
-          Payment processing isn&apos;t connected yet — switching plans below applies instantly without charging you.
+          Payments are processed securely via Razorpay. Upgrading a paid plan will open the payment checkout.
         </p>
       </div>
 
@@ -142,16 +143,22 @@ export default function BillingPage() {
                 >
                   Current plan
                 </button>
+              ) : planInfo.amountInPaise > 0 ? (
+                <RazorpayButton
+                  plan={planKey}
+                  label={isUpgrade ? `Upgrade to ${planInfo.label}` : `Switch to ${planInfo.label}`}
+                  className={`w-full rounded-lg px-3.5 py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 ${
+                    isPopular ? "bg-brand text-white" : "border border-border-mid bg-surface-1 text-text-strong"
+                  }`}
+                />
               ) : (
                 <form action={upgradePlan}>
                   <input type="hidden" name="plan" value={planKey} />
                   <button
                     type="submit"
-                    className={`w-full rounded-lg px-3.5 py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-90 ${
-                      isPopular ? "bg-brand text-white" : "border border-border-mid bg-surface-1 text-text-strong"
-                    }`}
+                    className="w-full rounded-lg border border-border-mid bg-surface-1 px-3.5 py-2.5 text-[13px] font-semibold text-text-strong transition-opacity hover:opacity-90"
                   >
-                    {isUpgrade ? `Upgrade to ${planInfo.label}` : `Switch to ${planInfo.label}`}
+                    Switch to Free
                   </button>
                 </form>
               )}
