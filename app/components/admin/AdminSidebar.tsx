@@ -74,7 +74,7 @@ export default function AdminSidebar({
         <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={onClose} aria-hidden="true" />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[240px] shrink-0 flex-col overflow-y-auto border-r border-border-soft bg-surface-1 transition-transform duration-200 md:static md:z-auto md:w-[220px] md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[240px] shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-border-soft bg-surface-1 transition-transform duration-200 md:static md:z-auto md:w-[220px] md:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
