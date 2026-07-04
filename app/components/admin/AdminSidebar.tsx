@@ -78,7 +78,19 @@ export default function AdminSidebar({
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-end px-4 pt-3 md:hidden">
+        <div className="flex items-center justify-between border-b border-border-soft px-4 pb-3 pt-[18px] md:hidden">
+          <Link
+            href="/admin"
+            onClick={onClose}
+            className="flex items-center gap-2.5 font-display text-base font-bold tracking-tight text-text-strong"
+          >
+            <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] bg-brand text-sm font-bold text-white">
+              E
+            </span>
+            <span className="whitespace-nowrap">
+              Edu<span className="text-brand">Slide</span>
+            </span>
+          </Link>
           <button
             type="button"
             onClick={onClose}
@@ -87,6 +99,16 @@ export default function AdminSidebar({
           >
             <X className="h-4 w-4" />
           </button>
+        </div>
+        <div className="border-b border-border-soft p-2.5">
+          <Link
+            href="/dashboard"
+            onClick={onClose}
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-3 hover:text-text-strong"
+          >
+            <LayoutDashboard className="h-[17px] w-[17px] shrink-0" />
+            Back to Dashboard
+          </Link>
         </div>
         <div className="flex-1 py-3">
           {NAV_SECTIONS.map(({ label, items }) => (
