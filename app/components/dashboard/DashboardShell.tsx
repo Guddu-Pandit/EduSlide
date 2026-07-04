@@ -29,6 +29,7 @@ export default function DashboardShell({
         fullName={fullName}
         email={email}
         plan={plan}
+        isAdmin={role === "admin"}
         presentationsCount={presentationsCount}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}

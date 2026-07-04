@@ -70,12 +70,12 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-1 text-[17px] font-semibold text-text-strong">User Management</div>
       <div className="mb-5 text-[12px] text-text-muted">View, edit, suspend, or delete platform users</div>
 
       {/* Search bar */}
-      <div className="mb-4 flex items-center gap-2.5">
+      <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
           <input
@@ -85,22 +85,24 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <select
-          value={planFilter}
-          onChange={(e) => setPlanFilter(e.target.value)}
-          className="h-9 rounded-lg border border-border-soft bg-surface-1 px-2.5 text-[13px] text-text-muted outline-none"
-        >
-          <option value="">All plans</option>
-          <option value="free">Free</option>
-          <option value="pro">Pro</option>
-          <option value="team">Team</option>
-        </select>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" /> Add user
-        </button>
+        <div className="flex items-center gap-2.5">
+          <select
+            value={planFilter}
+            onChange={(e) => setPlanFilter(e.target.value)}
+            className="h-9 flex-1 rounded-lg border border-border-soft bg-surface-1 px-2.5 text-[13px] text-text-muted outline-none sm:flex-none"
+          >
+            <option value="">All plans</option>
+            <option value="free">Free</option>
+            <option value="pro">Pro</option>
+            <option value="team">Team</option>
+          </select>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" /> Add user
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -187,7 +189,7 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
       {/* Add User Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35">
-          <div className="w-[420px] max-w-[90vw] rounded-xl border border-border-soft bg-surface-1 p-6 shadow-2xl">
+          <div className="max-h-[90vh] w-[420px] max-w-[90vw] overflow-y-auto rounded-xl border border-border-soft bg-surface-1 p-4 shadow-2xl sm:p-6">
             <div className="mb-1 flex items-center justify-between">
               <div className="text-[15px] font-semibold text-text-strong">Add new user</div>
               <button onClick={() => setShowModal(false)} className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted hover:bg-surface-3">
@@ -195,7 +197,7 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
               </button>
             </div>
             <div className="mb-4 text-[12px] text-text-muted">Create a user account directly from admin</div>
-            <form onSubmit={handleAddUser} className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleAddUser} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-[12px] font-medium text-text-muted">Full name</label>
                 <input name="full_name" className={inputCls} placeholder="e.g. Priya Sharma" />
@@ -212,7 +214,7 @@ export default function UsersContent({ users }: { users: AdminUser[] }) {
                 </label>
                 <input name="password" type="password" required minLength={8} className={inputCls} placeholder="Min 8 characters" />
               </div>
-              <div className="col-span-2 mt-3 flex justify-end gap-2.5">
+              <div className="col-span-1 mt-3 flex justify-end gap-2.5 sm:col-span-2">
                 <button type="button" onClick={() => setShowModal(false)} className="rounded-lg border border-border-soft px-4 py-2 text-[13px] font-medium text-text-muted hover:bg-surface-3">
                   Cancel
                 </button>

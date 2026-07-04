@@ -33,7 +33,7 @@ export default async function ReportsPage() {
   const errors = await getErrorPresentations();
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-1 text-[17px] font-semibold text-admin-text">Reports</div>
       <div className="mb-5 text-[12px] text-admin-muted">Failed presentations and platform error logs</div>
 

@@ -16,6 +16,7 @@ import {
   PanelLeftOpen,
   Presentation,
   Settings,
+  ShieldCheck,
   Upload,
   X,
 } from "lucide-react";
@@ -85,6 +86,7 @@ export default function Sidebar({
   fullName,
   email,
   plan,
+  isAdmin,
   presentationsCount,
   mobileOpen,
   onClose,
@@ -92,6 +94,7 @@ export default function Sidebar({
   fullName: string | null;
   email: string | undefined;
   plan: Plan;
+  isAdmin?: boolean;
   presentationsCount: number;
   mobileOpen: boolean;
   onClose: () => void;
@@ -208,6 +211,15 @@ export default function Sidebar({
           {accountItems.map((item) => (
             <NavLink key={item.href} {...item} collapsed={iconOnly} onNavigate={onClose} />
           ))}
+          {isAdmin && (
+            <NavLink
+              href="/admin"
+              label="Admin panel"
+              icon={ShieldCheck}
+              collapsed={iconOnly}
+              onNavigate={onClose}
+            />
+          )}
           <button
             type="button"
             title={iconOnly ? "Help" : undefined}
