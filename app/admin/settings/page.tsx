@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const [security, setSecurity] = useState({ twofa: true, rateLimit: true });
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-1 text-[17px] font-semibold text-text-strong">Platform Settings</div>
       <div className="mb-5 text-[12px] text-text-muted">Control global behaviour, security, and integrations</div>
 

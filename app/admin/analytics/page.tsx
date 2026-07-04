@@ -18,7 +18,7 @@ export default async function AnalyticsPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-1 text-[17px] font-semibold text-text-strong">Analytics</div>
       <div className="mb-5 text-[12px] text-text-muted">Platform usage trends and performance data</div>
 

@@ -14,7 +14,7 @@ export default async function BillingPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-1 text-[17px] font-semibold text-text-strong">Billing & Plans</div>
       <div className="mb-5 text-[12px] text-text-muted">Manage subscription tiers and user plan distribution</div>
 

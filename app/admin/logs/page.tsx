@@ -40,11 +40,11 @@ export default function LogsPage() {
   }, [key]);
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-1 text-[17px] font-semibold text-admin-text">System Logs</div>
       <div className="mb-5 text-[12px] text-admin-muted">Real-time platform events and error tracking</div>
 
-      <div className="mb-4 flex items-center gap-2.5">
+      <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-admin-muted" />
           <input
@@ -52,24 +52,26 @@ export default function LogsPage() {
             placeholder="Filter logs…"
           />
         </div>
-        <select className="h-9 rounded-lg border border-admin-border bg-admin-surface px-2.5 text-[13px] text-admin-body outline-none">
-          <option>All levels</option>
-          <option>Error</option>
-          <option>Warning</option>
-          <option>Info</option>
-        </select>
-        <button
-          onClick={() => { setKey((k) => k + 1); toast("Log stream refreshed"); }}
-          className="flex items-center gap-1.5 rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-[12px] font-medium text-admin-body hover:bg-admin-hover"
-        >
-          <RefreshCw className="h-3.5 w-3.5" /> Refresh
-        </button>
-        <button
-          onClick={() => toast("Logs exported")}
-          className="flex items-center gap-1.5 rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-[12px] font-medium text-admin-body hover:bg-admin-hover"
-        >
-          <Download className="h-3.5 w-3.5" /> Export
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <select className="h-9 flex-1 rounded-lg border border-admin-border bg-admin-surface px-2.5 text-[13px] text-admin-body outline-none sm:flex-none">
+            <option>All levels</option>
+            <option>Error</option>
+            <option>Warning</option>
+            <option>Info</option>
+          </select>
+          <button
+            onClick={() => { setKey((k) => k + 1); toast("Log stream refreshed"); }}
+            className="flex items-center gap-1.5 rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-[12px] font-medium text-admin-body hover:bg-admin-hover"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </button>
+          <button
+            onClick={() => toast("Logs exported")}
+            className="flex items-center gap-1.5 rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-[12px] font-medium text-admin-body hover:bg-admin-hover"
+          >
+            <Download className="h-3.5 w-3.5" /> Export
+          </button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border" style={{ background: "#0f1117", borderColor: "#2a2d3a" }}>

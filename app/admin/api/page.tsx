@@ -36,7 +36,7 @@ export default function ApiPage() {
   const [integrations, setIntegrations] = useState({ openai: true, drive: true, razorpay: true, slack: false });
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-1 text-[17px] font-semibold text-text-strong">API & Integrations</div>
       <div className="mb-5 text-[12px] text-text-muted">Manage API keys, webhooks, and third-party connections</div>
 

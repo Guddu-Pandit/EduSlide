@@ -194,7 +194,8 @@ export default function BillingPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-border-soft bg-surface-1 overflow-hidden">
-            <table className="w-full text-[13px]">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-150 text-[13px]">
               <thead>
                 <tr className="border-b border-border-soft bg-surface-2">
                   <th className="px-4 py-3 text-left font-semibold text-text-muted">Date</th>
@@ -246,6 +247,7 @@ export default function BillingPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

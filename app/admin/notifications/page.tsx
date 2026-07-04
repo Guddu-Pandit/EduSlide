@@ -13,7 +13,7 @@ export default async function NotificationsPage() {
   const activity = await getRecentActivity();
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-1 text-[17px] font-semibold text-admin-text">Notifications</div>
       <div className="mb-5 text-[12px] text-admin-muted">Platform alerts, user activity, and system messages</div>
 
