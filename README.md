@@ -7,19 +7,23 @@ EduSlide turns documents (PDF, DOCX, TXT) into ready-to-edit slide decks. Upload
 - Document upload and parsing for PDF, DOCX, and plain text
 - AI-powered slide deck generation from extracted document text
 - Automatic image suggestions sourced from Pexels and Unsplash
-- Presentation preview and management dashboard
+- Presentation preview, editing, and management dashboard
 - PPTX export
 - Supabase-based authentication (email/password and OAuth) with row-level data access
-- Plan-based usage limits (free, pro, team)
+- Plan-based usage limits (free, pro, team) with Razorpay-powered billing and upgrades
+- Admin panel for managing users, content, billing, analytics, reports, and logs
 
 ## Tech Stack
 
-- [Next.js](https://nextjs.org) (App Router) with React 19 and TypeScript
-- [Supabase](https://supabase.com) for auth, database, and storage
-- [OpenAI](https://platform.openai.com) for slide content generation
-- [pptxgenjs](https://github.com/gitbrent/PptxGenJS) for PPTX file generation
-- [pdf-parse](https://www.npmjs.com/package/pdf-parse) and [mammoth](https://www.npmjs.com/package/mammoth) for document text extraction
-- Tailwind CSS for styling
+| Purpose | Technology |
+| --- | --- |
+| Framework | [Next.js](https://nextjs.org) (App Router), React 19, TypeScript |
+| Backend & Auth | [Supabase](https://supabase.com) (Postgres, auth, storage, row-level security) |
+| AI generation | [OpenAI](https://platform.openai.com) |
+| Payments | [Razorpay](https://razorpay.com) |
+| PPTX export | [pptxgenjs](https://github.com/gitbrent/PptxGenJS) |
+| Document parsing | [pdf-parse](https://www.npmjs.com/package/pdf-parse), [mammoth](https://www.npmjs.com/package/mammoth) |
+| Styling | Tailwind CSS |
 
 ## Getting Started
 
@@ -28,6 +32,7 @@ EduSlide turns documents (PDF, DOCX, TXT) into ready-to-edit slide decks. Upload
 - Node.js 18 or later
 - A Supabase project
 - An OpenAI API key
+- A Razorpay account (for billing and plan upgrades)
 - Pexels and Unsplash API keys (optional, used for slide images)
 
 ### Environment Variables
@@ -41,6 +46,10 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 OPENAI_API_KEY=
 OPENAI_MODEL=
+
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
 
 PEXELS_API_KEY=
 UNSPLASH_ACCESS_KEY=
@@ -64,13 +73,24 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ```
 app/
-  dashboard/          Authenticated dashboard pages (upload, documents, presentations, settings, billing, analytics)
-  components/          UI components for the dashboard, auth, and landing page
+  admin/               Admin panel: users, content, billing, analytics, reports, logs, settings
+  api/
+    razorpay/           Razorpay order creation and webhook handling
+  auth/                 Authentication callback handling
+  components/           UI components for the dashboard, auth, and landing page
+  dashboard/            Authenticated dashboard pages
+    upload/               Document upload
+    documents/            Uploaded document management
+    presentations/        Generated deck preview and editing
+    templates/            Slide templates
+    billing/              Plan status, upgrades, and payment history
+    analytics/            Usage analytics
+    settings/             Account settings
   lib/
-    dashboard/         Document parsing, deck generation, PPTX export, plan limits, and Supabase queries
-    supabase/           Supabase client setup (browser, server, admin)
-  login/, signup/, auth/  Authentication pages and callback handling
-supabase/migrations/   Database schema migrations
+    dashboard/            Document parsing, deck generation, PPTX export, plan limits, Razorpay actions, Supabase queries
+    supabase/             Supabase client setup (browser, server, admin)
+  login/, signup/         Authentication pages
+supabase/migrations/    Database schema migrations
 ```
 
 ## Available Scripts
