@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Sidebar from "@/app/components/dashboard/Sidebar";
 import Topbar from "@/app/components/dashboard/Topbar";
 import Toast from "@/app/components/dashboard/Toast";
+import LimitPopup from "@/app/components/dashboard/LimitPopup";
 import type { Plan } from "@/app/lib/dashboard/plan";
 
 export default function DashboardShell({
@@ -40,6 +41,7 @@ export default function DashboardShell({
       </div>
       <Suspense>
         <Toast />
+        <LimitPopup />
       </Suspense>
     </div>
   );
