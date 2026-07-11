@@ -18,6 +18,20 @@ const FALLBACK_MODELS = [
   "gemini-flash-lite-latest",
 ];
 
+// Env vars holding API keys, in priority order. Every model is exhausted on
+// one key before the next key is touched.
+const KEY_ENV_VARS = ["GEMINI_API_KEY", "GEMINI_API_KEY_2"];
+
+/**
+ * Only capacity errors may trigger fallback: 429 (rate limit / quota —
+ * Gemini's RESOURCE_EXHAUSTED surfaces as 429 through the OpenAI-compat
+ * layer) and 503 (model overloaded). Anything else — bad request, safety
+ * block, auth — is a real error and must propagate immediately.
+ */
+function isLimitError(err: unknown): boolean {
+  return err instanceof OpenAI.APIError && (err.status === 429 || err.status === 503);
+}
+
 interface ModelSlide {
   slideType?: string;
   title: string;
@@ -158,15 +172,26 @@ function buildSystemPrompt(maxSlides: number): string {
   ].join("\n");
 }
 
+/** Which key + model actually served the request, for logging. */
+export interface GenerationMeta {
+  /** Env var name of the key that succeeded (never the key itself). */
+  apiKeyName: string;
+  model: string;
+}
+
+export interface GenerationResult {
+  deck: GeneratedDeck;
+  meta: GenerationMeta;
+}
+
 export async function generateDeck(
   sourceText: string,
   template: string,
   maxSlides: number,
-): Promise<GeneratedDeck> {
+): Promise<GenerationResult> {
   // Gemini, via its OpenAI-compatible endpoint — same SDK, different baseURL.
-  // Keys are tried in order: when one hits its quota (429), the next takes over.
-  const apiKeys = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2].filter(
-    (key): key is string => Boolean(key),
+  const apiKeys = KEY_ENV_VARS.map((name) => ({ name, key: process.env[name] })).filter(
+    (entry): entry is { name: string; key: string } => Boolean(entry.key),
   );
   if (apiKeys.length === 0) throw new Error("GEMINI_API_KEY is not configured");
 
@@ -185,15 +210,22 @@ export async function generateDeck(
 
   const trimmed = sourceText.slice(0, MAX_SOURCE_CHARS);
 
+  // Fallback ladder: exhaust every model on one key before moving to the
+  // next key (limits are usually per key/project, so a fresh key resets the
+  // whole model chain). Models that 404 are dead for every key.
   let completion: OpenAI.Chat.Completions.ChatCompletion | undefined;
+  let meta: GenerationMeta | undefined;
   let sawRateLimit = false;
+  const deadModels = new Set<string>();
 
-  outer: for (const model of models) {
-    for (const apiKey of apiKeys) {
-      const client = new OpenAI({
-        apiKey,
-        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-      });
+  outer: for (const { name: apiKeyName, key: apiKey } of apiKeys) {
+    const client = new OpenAI({
+      apiKey,
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+    });
+
+    for (const model of models) {
+      if (deadModels.has(model)) continue;
 
       try {
         completion = await client.chat.completions.create({
@@ -211,26 +243,25 @@ export async function generateDeck(
             },
           ],
         });
+        meta = { apiKeyName, model };
         break outer;
       } catch (err) {
-        if (err instanceof OpenAI.APIError) {
-          if (err.status === 429) {
-            // Quota or rate limit on this model+key — try the next key.
-            sawRateLimit = true;
-            continue;
-          }
-          if (err.status === 404) {
-            // Model retired or not available to this key — no point trying
-            // it with the other keys, move to the next model.
-            continue outer;
-          }
+        if (isLimitError(err)) {
+          // Quota / rate limit / overloaded — next model on the same key.
+          sawRateLimit = true;
+          continue;
+        }
+        if (err instanceof OpenAI.APIError && err.status === 404) {
+          // Model retired or not offered to this account — dead everywhere.
+          deadModels.add(model);
+          continue;
         }
         throw err;
       }
     }
   }
 
-  if (!completion) {
+  if (!completion || !meta) {
     if (sawRateLimit) {
       throw new GenerationLimitError(
         "AI limit exceeded — every configured model and API key hit its quota or rate limit. Wait a minute and retry.",
@@ -263,13 +294,16 @@ export async function generateDeck(
   );
 
   return {
-    slides: parsed.slides.map((slide, i) => ({
-      slideType: normalizeSlideType(slide.slideType),
-      title: slide.title,
-      bullets: slide.bullets ?? [],
-      notes: slide.notes ?? "",
-      imageQuery: slide.imageQuery ?? slide.title,
-      imageUrl: imageUrls[i],
-    })),
+    deck: {
+      slides: parsed.slides.map((slide, i) => ({
+        slideType: normalizeSlideType(slide.slideType),
+        title: slide.title,
+        bullets: slide.bullets ?? [],
+        notes: slide.notes ?? "",
+        imageQuery: slide.imageQuery ?? slide.title,
+        imageUrl: imageUrls[i],
+      })),
+    },
+    meta,
   };
 }

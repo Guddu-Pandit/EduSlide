@@ -19,7 +19,7 @@ export default function UploadPage() {
 
   return (
     <div className="px-4 py-5 md:px-7 md:py-6">
-      <UploadForm defaultTemplate={profile.default_template} />
+      <UploadForm defaultTemplate={profile.default_template} plan={profile.plan} />
     </div>
   );
 }

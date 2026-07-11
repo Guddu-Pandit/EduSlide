@@ -73,7 +73,10 @@ async function runGeneration(
     const text = await extractText(buffer, doc.file_type as DocumentFileType);
     if (!text.trim()) throw new Error("Could not extract any text from the document");
 
-    const deck = await generateDeck(text, template, maxSlides);
+    const { deck, meta } = await generateDeck(text, template, maxSlides);
+    console.log(
+      `[generation] presentation ${presentationId} served by ${meta.apiKeyName} / ${meta.model}`,
+    );
 
     await supabase
       .from("presentations")
