@@ -8,6 +8,16 @@ const MAX_SOURCE_CHARS = 16000;
 const PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
 const UNSPLASH_SEARCH_URL = "https://api.unsplash.com/search/photos";
 
+// Tried in order when the one before is rate-limited or unavailable. All
+// three are verified to return strict JSON in json_object mode — some Gemini
+// models (e.g. gemini-3.5-flash) wrap the JSON in extra text and break
+// parsing, so don't add models here without checking that first.
+const FALLBACK_MODELS = [
+  "gemini-flash-latest",
+  "gemini-3-flash-preview",
+  "gemini-flash-lite-latest",
+];
+
 interface ModelSlide {
   slideType?: string;
   title: string;
@@ -160,7 +170,11 @@ export async function generateDeck(
   );
   if (apiKeys.length === 0) throw new Error("GEMINI_API_KEY is not configured");
 
-  const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+  // GEMINI_MODEL (if set) is tried first, then the built-in fallback chain.
+  const envModel = process.env.GEMINI_MODEL;
+  const models = envModel
+    ? [envModel, ...FALLBACK_MODELS.filter((m) => m !== envModel)]
+    : FALLBACK_MODELS;
 
   // Previous direct-OpenAI setup — uncomment (and remove the Gemini block
   // above) to switch back:
@@ -172,46 +186,58 @@ export async function generateDeck(
   const trimmed = sourceText.slice(0, MAX_SOURCE_CHARS);
 
   let completion: OpenAI.Chat.Completions.ChatCompletion | undefined;
+  let sawRateLimit = false;
 
-  for (const [i, apiKey] of apiKeys.entries()) {
-    const client = new OpenAI({
-      apiKey,
-      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-    });
-
-    try {
-      completion = await client.chat.completions.create({
-        model,
-        response_format: { type: "json_object" },
-        temperature: 0.4,
-        messages: [
-          {
-            role: "system",
-            content: buildSystemPrompt(maxSlides),
-          },
-          {
-            role: "user",
-            content: `Template style: ${template}\n\nSource document:\n${trimmed}`,
-          },
-        ],
+  outer: for (const model of models) {
+    for (const apiKey of apiKeys) {
+      const client = new OpenAI({
+        apiKey,
+        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
       });
-      break;
-    } catch (err) {
-      if (err instanceof OpenAI.APIError && err.status === 429) {
-        // Quota or rate limit on this key — fall through to the next one.
-        if (i < apiKeys.length - 1) continue;
 
-        throw new GenerationLimitError(
-          apiKeys.length > 1
-            ? "AI limit exceeded — every configured API key hit its quota or rate limit. Wait a minute and retry, or check the plans for your keys."
-            : "AI limit exceeded — the API quota or rate limit was hit. Wait a minute and retry, or check the plan for your API key.",
-        );
+      try {
+        completion = await client.chat.completions.create({
+          model,
+          response_format: { type: "json_object" },
+          temperature: 0.4,
+          messages: [
+            {
+              role: "system",
+              content: buildSystemPrompt(maxSlides),
+            },
+            {
+              role: "user",
+              content: `Template style: ${template}\n\nSource document:\n${trimmed}`,
+            },
+          ],
+        });
+        break outer;
+      } catch (err) {
+        if (err instanceof OpenAI.APIError) {
+          if (err.status === 429) {
+            // Quota or rate limit on this model+key — try the next key.
+            sawRateLimit = true;
+            continue;
+          }
+          if (err.status === 404) {
+            // Model retired or not available to this key — no point trying
+            // it with the other keys, move to the next model.
+            continue outer;
+          }
+        }
+        throw err;
       }
-      throw err;
     }
   }
 
-  if (!completion) throw new Error("The model returned no response");
+  if (!completion) {
+    if (sawRateLimit) {
+      throw new GenerationLimitError(
+        "AI limit exceeded — every configured model and API key hit its quota or rate limit. Wait a minute and retry.",
+      );
+    }
+    throw new Error("None of the configured models are available to this API key");
+  }
 
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("The model returned no content");
