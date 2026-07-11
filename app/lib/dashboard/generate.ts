@@ -20,6 +20,9 @@ interface ModelDeck {
   slides: ModelSlide[];
 }
 
+/** Thrown when the AI provider rejects the request with a 429 (quota or rate limit). */
+export class GenerationLimitError extends Error {}
+
 const VALID_SLIDE_TYPES: SlideType[] = ["title", "content", "data", "summary"];
 
 function normalizeSlideType(value: string | undefined): SlideType {
@@ -126,28 +129,40 @@ export async function generateDeck(
   const model = process.env.OPENAI_MODEL || "gpt-4o";
   const trimmed = sourceText.slice(0, MAX_SOURCE_CHARS);
 
-  const completion = await client.chat.completions.create({
-    model,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content:
-          "You convert source documents into slide deck outlines for a presentation tool. " +
-          'Respond with strict JSON only, in this exact shape: {"slides":[{"slideType":string,"title":string,"bullets":string[],"notes":string,"imageQuery":string}]}. ' +
-          `Produce exactly ${maxSlides} slide${maxSlides === 1 ? "" : "s"} total — this is a hard limit from the user's plan, do not exceed it. ` +
-          '`slideType` must be one of "title", "content", "data", "summary". The first slide is always "title" (bullets can be empty). If the count allows, end with a "summary" slide. Use "data" for any slide built around a statistic, metric, or comparison drawn from the source, and "content" for everything else. ' +
-          "`title` must be a specific claim or finding the slide supports, not a generic topic label — phrase it like a headline asserting something (e.g. \"Renewable adoption cut grid costs 30% in five years\", not \"Renewable Energy\"). " +
-          "`bullets` must be 2-5 complete sentences, not fragments, that build on each other in a logical sequence and together substantiate the title's claim with specifics from the source. " +
-          "`notes` is what the presenter would say out loud in addition to what's on the slide — context, transitions, examples, or framing. Never restate or rephrase the bullets. " +
-          "`imageQuery` is a 3-5 word search term describing a real, literal photograph (not an illustration or abstract concept) that visually represents the slide, suitable for a stock photo search — e.g. \"solar panels on rooftop\".",
-      },
-      {
-        role: "user",
-        content: `Template style: ${template}\n\nSource document:\n${trimmed}`,
-      },
-    ],
-  });
+  let completion;
+  try {
+    completion = await client.chat.completions.create({
+      model,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "You convert source documents into slide deck outlines for a presentation tool. " +
+            'Respond with strict JSON only, in this exact shape: {"slides":[{"slideType":string,"title":string,"bullets":string[],"notes":string,"imageQuery":string}]}. ' +
+            `Produce exactly ${maxSlides} slide${maxSlides === 1 ? "" : "s"} total — this is a hard limit from the user's plan, do not exceed it. ` +
+            '`slideType` must be one of "title", "content", "data", "summary". The first slide is always "title" (bullets can be empty). If the count allows, end with a "summary" slide. Use "data" for any slide built around a statistic, metric, or comparison drawn from the source, and "content" for everything else. ' +
+            "`title` must be a specific claim or finding the slide supports, not a generic topic label — phrase it like a headline asserting something (e.g. \"Renewable adoption cut grid costs 30% in five years\", not \"Renewable Energy\"). " +
+            "`bullets` must be 2-5 complete sentences, not fragments, that build on each other in a logical sequence and together substantiate the title's claim with specifics from the source. " +
+            "`notes` is what the presenter would say out loud in addition to what's on the slide — context, transitions, examples, or framing. Never restate or rephrase the bullets. " +
+            "`imageQuery` is a 3-5 word search term describing a real, literal photograph (not an illustration or abstract concept) that visually represents the slide, suitable for a stock photo search — e.g. \"solar panels on rooftop\".",
+        },
+        {
+          role: "user",
+          content: `Template style: ${template}\n\nSource document:\n${trimmed}`,
+        },
+      ],
+    });
+  } catch (err) {
+    if (err instanceof OpenAI.APIError && err.status === 429) {
+      throw new GenerationLimitError(
+        err.code === "insufficient_quota"
+          ? "AI quota exceeded — the OpenAI account is out of credits. Add credits (or switch to a funded API key) and retry."
+          : "AI rate limit exceeded — too many requests right now. Wait a minute and retry.",
+      );
+    }
+    throw err;
+  }
 
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("The model returned no content");

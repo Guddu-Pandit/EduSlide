@@ -7,7 +7,9 @@ import { createClient } from "@/app/lib/supabase/server";
 import { createAdminClient } from "@/app/lib/supabase/admin";
 import { PLAN_LIMITS, type Plan } from "./plan";
 import type { DocumentFileType } from "./types";
-import { extractText, generateDeck } from "./generate";
+import { extractText, generateDeck, GenerationLimitError } from "./generate";
+
+type GenerationOutcome = { status: "done" } | { status: "error" | "limit"; message: string };
 
 const EXT_TO_TYPE: Record<string, DocumentFileType> = {
   pdf: "pdf",
@@ -25,6 +27,11 @@ async function requireUser(supabase: SupabaseClient): Promise<User> {
 
 function toastRedirect(path: string, message: string): never {
   redirect(`${path}?toast=${encodeURIComponent(message)}`);
+}
+
+/** Like toastRedirect, but the message is shown as a blocking popup instead of a toast. */
+function popupRedirect(path: string, message: string): never {
+  redirect(`${path}?popup=${encodeURIComponent(message)}`);
 }
 
 /** Slide count is capped by plan, not chosen by the user. */
@@ -46,7 +53,7 @@ async function runGeneration(
   documentId: string,
   template: string,
   maxSlides: number,
-): Promise<"done" | "error"> {
+): Promise<GenerationOutcome> {
   await supabase.from("presentations").update({ status: "generating" }).eq("id", presentationId);
 
   try {
@@ -79,17 +86,16 @@ async function runGeneration(
       })
       .eq("id", presentationId);
 
-    return "done";
+    return { status: "done" };
   } catch (err) {
+    const message = err instanceof Error ? err.message : "Generation failed";
+
     await supabase
       .from("presentations")
-      .update({
-        status: "error",
-        error_message: err instanceof Error ? err.message : "Generation failed",
-      })
+      .update({ status: "error", error_message: message })
       .eq("id", presentationId);
 
-    return "error";
+    return { status: err instanceof GenerationLimitError ? "limit" : "error", message };
   }
 }
 
@@ -140,7 +146,7 @@ export async function uploadDocument(formData: FormData) {
   const autoGenerate = formData.get("autoGenerate") === "on";
   const template = (formData.get("template") as string) || "corporate";
 
-  let generationResult: "done" | "error" | null = null;
+  let generationResult: GenerationOutcome | null = null;
 
   if (autoGenerate) {
     const maxSlides = await getMaxSlides(supabase, user.id);
@@ -166,10 +172,14 @@ export async function uploadDocument(formData: FormData) {
   revalidatePath("/dashboard/documents");
   revalidatePath("/dashboard/presentations");
 
+  if (generationResult?.status === "limit") {
+    popupRedirect("/dashboard/documents", generationResult.message);
+  }
+
   const message =
-    generationResult === "done"
+    generationResult?.status === "done"
       ? "Document uploaded — presentation generated"
-      : generationResult === "error"
+      : generationResult?.status === "error"
         ? "Document uploaded — generation failed, see Presentations"
         : "Document uploaded";
 
@@ -209,17 +219,21 @@ export async function convertDocument(formData: FormData) {
     .select()
     .single();
 
-  const result = presentation
+  const result: GenerationOutcome = presentation
     ? await runGeneration(supabase, presentation.id, documentId, template, maxSlides)
-    : "error";
+    : { status: "error", message: "Could not create the presentation record" };
 
   revalidatePath("/dashboard/presentations");
   revalidatePath("/dashboard/documents");
   revalidatePath("/dashboard");
 
+  if (result.status === "limit") {
+    popupRedirect("/dashboard/presentations", result.message);
+  }
+
   toastRedirect(
     "/dashboard/presentations",
-    result === "done" ? "Presentation generated" : "Generation failed — see status for details",
+    result.status === "done" ? "Presentation generated" : "Generation failed — see status for details",
   );
 }
 
@@ -272,7 +286,7 @@ export async function retryPresentation(formData: FormData) {
     .select()
     .single();
 
-  const result = presentation?.document_id
+  const result: GenerationOutcome = presentation?.document_id
     ? await runGeneration(
         supabase,
         presentation.id,
@@ -280,13 +294,17 @@ export async function retryPresentation(formData: FormData) {
         presentation.template,
         presentation.requested_slide_count ?? (await getMaxSlides(supabase, user.id)),
       )
-    : "error";
+    : { status: "error", message: "Presentation not found" };
 
   revalidatePath("/dashboard/presentations");
 
+  if (result.status === "limit") {
+    popupRedirect("/dashboard/presentations", result.message);
+  }
+
   toastRedirect(
     "/dashboard/presentations",
-    result === "done" ? "Presentation generated" : "Generation failed — see status for details",
+    result.status === "done" ? "Presentation generated" : "Generation failed — see status for details",
   );
 }
 
