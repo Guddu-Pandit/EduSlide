@@ -117,6 +117,37 @@ async function resolveImageUrl(query: string): Promise<string | null> {
   return null;
 }
 
+/**
+ * Length limits below mirror the pptx renderer's fixed text boxes (pptx.ts):
+ * titles get ~2 lines before clipping, the bullet area fits ~10 lines at
+ * 16pt, and the title layout renders no bullets at all.
+ */
+function buildSystemPrompt(maxSlides: number): string {
+  return [
+    "You are an expert presentation designer and storyteller. Convert the source document into a slide deck outline for a presentation tool.",
+    "",
+    "OUTPUT FORMAT",
+    'Respond with strict JSON only, in this exact shape: {"slides":[{"slideType":string,"title":string,"bullets":string[],"notes":string,"imageQuery":string}]}. No markdown, no commentary, nothing outside the JSON object.',
+    "",
+    `DECK STRUCTURE — produce exactly ${maxSlides} slide${maxSlides === 1 ? "" : "s"}. This is a hard limit from the user's plan; never exceed it.`,
+    '- Slide 1 is always slideType "title". Its `title` is the deck title: a compelling, specific headline of at most 10 words capturing the document\'s core message. Its `bullets` MUST be an empty array — the title layout renders no bullets.',
+    `${maxSlides >= 3 ? '- The last slide is slideType "summary": distill the 2-4 takeaways the audience must remember, and end with one forward-looking implication or clear call to action.' : "- With so few slides, pick only the single most important point from the source."}`,
+    '- Use "data" for any slide built around a statistic, metric, or comparison from the source; its first bullet must state the key number plainly. Use "content" for everything else. If the source has no real data, use "content" — never invent numbers.',
+    "- The deck must read as one continuous story: open with the problem or context, develop the specifics in the middle, resolve at the end. Each slide advances the argument; never repeat a point across slides.",
+    "",
+    "SLIDE WRITING RULES",
+    '- `title`: a specific claim or finding the slide substantiates, phrased as an assertive headline of at most 12 words (e.g. "Renewable adoption cut grid costs 30% in five years", not "Renewable Energy"). Keep titles parallel in tone across the deck.',
+    "- `bullets`: 3-4 per slide (5 only when truly needed). Each is one complete sentence of at most 22 words, packed with specifics from the source — numbers, names, dates, causes. Bullets build on each other in logical order and together prove the title's claim. Never restate the title or another bullet.",
+    "- `notes`: 2-4 sentences the presenter speaks aloud beyond what is on the slide — background, an example, an anecdote, or a transition into the next slide. Never restate or rephrase the bullets.",
+    '- `imageQuery`: a 3-5 word stock-photo search for a real, literal photograph (no illustrations, abstract concepts, or text-heavy images) that visually matches the slide, e.g. "solar panels on rooftop". For the title slide choose a wide, atmospheric scene that works as a full-bleed background behind large text.',
+    "",
+    "STYLE",
+    "- Ground every statement in the source document; never fabricate facts, quotes, or statistics.",
+    "- Write in the same language as the source document.",
+    "- Match the tone to the requested template style: corporate → crisp business language; academic → precise and measured; minimal → short and punchy; edu-blue / edu-green → clear and friendly for learners; high-contrast → direct and plain.",
+  ].join("\n");
+}
+
 export async function generateDeck(
   sourceText: string,
   template: string,
@@ -146,18 +177,11 @@ export async function generateDeck(
     completion = await client.chat.completions.create({
       model,
       response_format: { type: "json_object" },
+      temperature: 0.4,
       messages: [
         {
           role: "system",
-          content:
-            "You convert source documents into slide deck outlines for a presentation tool. " +
-            'Respond with strict JSON only, in this exact shape: {"slides":[{"slideType":string,"title":string,"bullets":string[],"notes":string,"imageQuery":string}]}. ' +
-            `Produce exactly ${maxSlides} slide${maxSlides === 1 ? "" : "s"} total — this is a hard limit from the user's plan, do not exceed it. ` +
-            '`slideType` must be one of "title", "content", "data", "summary". The first slide is always "title" (bullets can be empty). If the count allows, end with a "summary" slide. Use "data" for any slide built around a statistic, metric, or comparison drawn from the source, and "content" for everything else. ' +
-            "`title` must be a specific claim or finding the slide supports, not a generic topic label — phrase it like a headline asserting something (e.g. \"Renewable adoption cut grid costs 30% in five years\", not \"Renewable Energy\"). " +
-            "`bullets` must be 2-5 complete sentences, not fragments, that build on each other in a logical sequence and together substantiate the title's claim with specifics from the source. " +
-            "`notes` is what the presenter would say out loud in addition to what's on the slide — context, transitions, examples, or framing. Never restate or rephrase the bullets. " +
-            "`imageQuery` is a 3-5 word search term describing a real, literal photograph (not an illustration or abstract concept) that visually represents the slide, suitable for a stock photo search — e.g. \"solar panels on rooftop\".",
+          content: buildSystemPrompt(maxSlides),
         },
         {
           role: "user",
