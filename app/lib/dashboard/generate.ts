@@ -154,13 +154,12 @@ export async function generateDeck(
   maxSlides: number,
 ): Promise<GeneratedDeck> {
   // Gemini, via its OpenAI-compatible endpoint — same SDK, different baseURL.
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+  // Keys are tried in order: when one hits its quota (429), the next takes over.
+  const apiKeys = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2].filter(
+    (key): key is string => Boolean(key),
+  );
+  if (apiKeys.length === 0) throw new Error("GEMINI_API_KEY is not configured");
 
-  const client = new OpenAI({
-    apiKey,
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-  });
   const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
 
   // Previous direct-OpenAI setup — uncomment (and remove the Gemini block
@@ -172,35 +171,47 @@ export async function generateDeck(
 
   const trimmed = sourceText.slice(0, MAX_SOURCE_CHARS);
 
-  let completion;
-  try {
-    completion = await client.chat.completions.create({
-      model,
-      response_format: { type: "json_object" },
-      temperature: 0.4,
-      messages: [
-        {
-          role: "system",
-          content: buildSystemPrompt(maxSlides),
-        },
-        {
-          role: "user",
-          content: `Template style: ${template}\n\nSource document:\n${trimmed}`,
-        },
-      ],
+  let completion: OpenAI.Chat.Completions.ChatCompletion | undefined;
+
+  for (const [i, apiKey] of apiKeys.entries()) {
+    const client = new OpenAI({
+      apiKey,
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
     });
-  } catch (err) {
-    if (err instanceof OpenAI.APIError && err.status === 429) {
-      // OpenAI reports out-of-credits as code "insufficient_quota"; Gemini's
-      // free tier reports both quota and rate limits as RESOURCE_EXHAUSTED.
-      throw new GenerationLimitError(
-        err.code === "insufficient_quota"
-          ? "AI quota exceeded — the API account is out of credits. Add credits (or switch to a funded API key) and retry."
-          : "AI limit exceeded — the API quota or rate limit was hit. Wait a minute and retry, or check the plan for your API key.",
-      );
+
+    try {
+      completion = await client.chat.completions.create({
+        model,
+        response_format: { type: "json_object" },
+        temperature: 0.4,
+        messages: [
+          {
+            role: "system",
+            content: buildSystemPrompt(maxSlides),
+          },
+          {
+            role: "user",
+            content: `Template style: ${template}\n\nSource document:\n${trimmed}`,
+          },
+        ],
+      });
+      break;
+    } catch (err) {
+      if (err instanceof OpenAI.APIError && err.status === 429) {
+        // Quota or rate limit on this key — fall through to the next one.
+        if (i < apiKeys.length - 1) continue;
+
+        throw new GenerationLimitError(
+          apiKeys.length > 1
+            ? "AI limit exceeded — every configured API key hit its quota or rate limit. Wait a minute and retry, or check the plans for your keys."
+            : "AI limit exceeded — the API quota or rate limit was hit. Wait a minute and retry, or check the plan for your API key.",
+        );
+      }
+      throw err;
     }
-    throw err;
   }
+
+  if (!completion) throw new Error("The model returned no response");
 
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("The model returned no content");
