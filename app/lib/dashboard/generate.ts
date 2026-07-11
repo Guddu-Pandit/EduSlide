@@ -122,11 +122,23 @@ export async function generateDeck(
   template: string,
   maxSlides: number,
 ): Promise<GeneratedDeck> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
+  // Gemini, via its OpenAI-compatible endpoint — same SDK, different baseURL.
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
 
-  const client = new OpenAI({ apiKey });
-  const model = process.env.OPENAI_MODEL || "gpt-4o";
+  const client = new OpenAI({
+    apiKey,
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  });
+  const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+
+  // Previous direct-OpenAI setup — uncomment (and remove the Gemini block
+  // above) to switch back:
+  // const apiKey = process.env.OPENAI_API_KEY;
+  // if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
+  // const client = new OpenAI({ apiKey });
+  // const model = process.env.OPENAI_MODEL || "gpt-4o";
+
   const trimmed = sourceText.slice(0, MAX_SOURCE_CHARS);
 
   let completion;
@@ -155,10 +167,12 @@ export async function generateDeck(
     });
   } catch (err) {
     if (err instanceof OpenAI.APIError && err.status === 429) {
+      // OpenAI reports out-of-credits as code "insufficient_quota"; Gemini's
+      // free tier reports both quota and rate limits as RESOURCE_EXHAUSTED.
       throw new GenerationLimitError(
         err.code === "insufficient_quota"
-          ? "AI quota exceeded — the OpenAI account is out of credits. Add credits (or switch to a funded API key) and retry."
-          : "AI rate limit exceeded — too many requests right now. Wait a minute and retry.",
+          ? "AI quota exceeded — the API account is out of credits. Add credits (or switch to a funded API key) and retry."
+          : "AI limit exceeded — the API quota or rate limit was hit. Wait a minute and retry, or check the plan for your API key.",
       );
     }
     throw err;
