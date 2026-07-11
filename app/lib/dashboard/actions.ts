@@ -358,19 +358,6 @@ export async function updatePreferences(formData: FormData) {
   toastRedirect("/dashboard/settings", "Preferences updated");
 }
 
-export async function setDefaultTemplate(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser(supabase);
-  const template = formData.get("template") as string;
-
-  await supabase.from("profiles").update({ default_template: template }).eq("id", user.id);
-
-  revalidatePath("/dashboard/templates");
-  revalidatePath("/dashboard/upload");
-
-  toastRedirect("/dashboard/templates", "Default template updated");
-}
-
 export async function sendPasswordReset() {
   const supabase = await createClient();
   const user = await requireUser(supabase);

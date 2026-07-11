@@ -10,7 +10,6 @@ import {
   Files,
   HelpCircle,
   LayoutDashboard,
-  LayoutTemplate,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -33,7 +32,6 @@ const mainItems = [
 ];
 
 const manageItems = [
-  { href: "/dashboard/templates", label: "Templates", icon: LayoutTemplate },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
