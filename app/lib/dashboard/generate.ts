@@ -8,6 +8,30 @@ const MAX_SOURCE_CHARS = 16000;
 const PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
 const UNSPLASH_SEARCH_URL = "https://api.unsplash.com/search/photos";
 
+// Tried in order when the one before is rate-limited or unavailable. All
+// three are verified to return strict JSON in json_object mode — some Gemini
+// models (e.g. gemini-3.5-flash) wrap the JSON in extra text and break
+// parsing, so don't add models here without checking that first.
+const FALLBACK_MODELS = [
+  "gemini-flash-latest",
+  "gemini-3-flash-preview",
+  "gemini-flash-lite-latest",
+];
+
+// Env vars holding API keys, in priority order. Every model is exhausted on
+// one key before the next key is touched.
+const KEY_ENV_VARS = ["GEMINI_API_KEY", "GEMINI_API_KEY_2"];
+
+/**
+ * Only capacity errors may trigger fallback: 429 (rate limit / quota —
+ * Gemini's RESOURCE_EXHAUSTED surfaces as 429 through the OpenAI-compat
+ * layer) and 503 (model overloaded). Anything else — bad request, safety
+ * block, auth — is a real error and must propagate immediately.
+ */
+function isLimitError(err: unknown): boolean {
+  return err instanceof OpenAI.APIError && (err.status === 429 || err.status === 503);
+}
+
 interface ModelSlide {
   slideType?: string;
   title: string;
@@ -148,20 +172,34 @@ function buildSystemPrompt(maxSlides: number): string {
   ].join("\n");
 }
 
+/** Which key + model actually served the request, for logging. */
+export interface GenerationMeta {
+  /** Env var name of the key that succeeded (never the key itself). */
+  apiKeyName: string;
+  model: string;
+}
+
+export interface GenerationResult {
+  deck: GeneratedDeck;
+  meta: GenerationMeta;
+}
+
 export async function generateDeck(
   sourceText: string,
   template: string,
   maxSlides: number,
-): Promise<GeneratedDeck> {
+): Promise<GenerationResult> {
   // Gemini, via its OpenAI-compatible endpoint — same SDK, different baseURL.
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+  const apiKeys = KEY_ENV_VARS.map((name) => ({ name, key: process.env[name] })).filter(
+    (entry): entry is { name: string; key: string } => Boolean(entry.key),
+  );
+  if (apiKeys.length === 0) throw new Error("GEMINI_API_KEY is not configured");
 
-  const client = new OpenAI({
-    apiKey,
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-  });
-  const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+  // GEMINI_MODEL (if set) is tried first, then the built-in fallback chain.
+  const envModel = process.env.GEMINI_MODEL;
+  const models = envModel
+    ? [envModel, ...FALLBACK_MODELS.filter((m) => m !== envModel)]
+    : FALLBACK_MODELS;
 
   // Previous direct-OpenAI setup — uncomment (and remove the Gemini block
   // above) to switch back:
@@ -172,34 +210,64 @@ export async function generateDeck(
 
   const trimmed = sourceText.slice(0, MAX_SOURCE_CHARS);
 
-  let completion;
-  try {
-    completion = await client.chat.completions.create({
-      model,
-      response_format: { type: "json_object" },
-      temperature: 0.4,
-      messages: [
-        {
-          role: "system",
-          content: buildSystemPrompt(maxSlides),
-        },
-        {
-          role: "user",
-          content: `Template style: ${template}\n\nSource document:\n${trimmed}`,
-        },
-      ],
+  // Fallback ladder: exhaust every model on one key before moving to the
+  // next key (limits are usually per key/project, so a fresh key resets the
+  // whole model chain). Models that 404 are dead for every key.
+  let completion: OpenAI.Chat.Completions.ChatCompletion | undefined;
+  let meta: GenerationMeta | undefined;
+  let sawRateLimit = false;
+  const deadModels = new Set<string>();
+
+  outer: for (const { name: apiKeyName, key: apiKey } of apiKeys) {
+    const client = new OpenAI({
+      apiKey,
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
     });
-  } catch (err) {
-    if (err instanceof OpenAI.APIError && err.status === 429) {
-      // OpenAI reports out-of-credits as code "insufficient_quota"; Gemini's
-      // free tier reports both quota and rate limits as RESOURCE_EXHAUSTED.
+
+    for (const model of models) {
+      if (deadModels.has(model)) continue;
+
+      try {
+        completion = await client.chat.completions.create({
+          model,
+          response_format: { type: "json_object" },
+          temperature: 0.4,
+          messages: [
+            {
+              role: "system",
+              content: buildSystemPrompt(maxSlides),
+            },
+            {
+              role: "user",
+              content: `Template style: ${template}\n\nSource document:\n${trimmed}`,
+            },
+          ],
+        });
+        meta = { apiKeyName, model };
+        break outer;
+      } catch (err) {
+        if (isLimitError(err)) {
+          // Quota / rate limit / overloaded — next model on the same key.
+          sawRateLimit = true;
+          continue;
+        }
+        if (err instanceof OpenAI.APIError && err.status === 404) {
+          // Model retired or not offered to this account — dead everywhere.
+          deadModels.add(model);
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
+  if (!completion || !meta) {
+    if (sawRateLimit) {
       throw new GenerationLimitError(
-        err.code === "insufficient_quota"
-          ? "AI quota exceeded — the API account is out of credits. Add credits (or switch to a funded API key) and retry."
-          : "AI limit exceeded — the API quota or rate limit was hit. Wait a minute and retry, or check the plan for your API key.",
+        "AI limit exceeded — every configured model and API key hit its quota or rate limit. Wait a minute and retry.",
       );
     }
-    throw err;
+    throw new Error("None of the configured models are available to this API key");
   }
 
   const raw = completion.choices[0]?.message?.content;
@@ -226,13 +294,16 @@ export async function generateDeck(
   );
 
   return {
-    slides: parsed.slides.map((slide, i) => ({
-      slideType: normalizeSlideType(slide.slideType),
-      title: slide.title,
-      bullets: slide.bullets ?? [],
-      notes: slide.notes ?? "",
-      imageQuery: slide.imageQuery ?? slide.title,
-      imageUrl: imageUrls[i],
-    })),
+    deck: {
+      slides: parsed.slides.map((slide, i) => ({
+        slideType: normalizeSlideType(slide.slideType),
+        title: slide.title,
+        bullets: slide.bullets ?? [],
+        notes: slide.notes ?? "",
+        imageQuery: slide.imageQuery ?? slide.title,
+        imageUrl: imageUrls[i],
+      })),
+    },
+    meta,
   };
 }
