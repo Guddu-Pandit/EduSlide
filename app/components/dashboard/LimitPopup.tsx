@@ -17,11 +17,13 @@ export default function LimitPopup() {
 
   const [shownMessage, setShownMessage] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [title, setTitle] = useState("Limit exceeded");
   const [open, setOpen] = useState(false);
 
   if (message && message !== shownMessage) {
     setShownMessage(message);
     setText(message);
+    setTitle(searchParams.get("popupTitle") ?? "Limit exceeded");
     setOpen(true);
   }
 
@@ -30,6 +32,7 @@ export default function LimitPopup() {
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete("popup");
+    params.delete("popupTitle");
     const next = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     router.replace(next, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,7 +48,7 @@ export default function LimitPopup() {
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
             </span>
-            <div className="text-[15px] font-bold text-text-strong">Limit exceeded</div>
+            <div className="text-[15px] font-bold text-text-strong">{title}</div>
           </div>
           <button
             type="button"

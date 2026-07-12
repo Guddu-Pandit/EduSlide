@@ -203,9 +203,13 @@ export async function uploadDocument(formData: FormData) {
   const autoGenerate = formData.get("autoGenerate") === "on";
   const template = (formData.get("template") as string) || "corporate";
 
+  // A cooldown blocks auto-generation, but the upload itself still succeeds —
+  // we just skip the generation and tell the user how long to wait.
+  const cooldownWait = autoGenerate ? await cooldownRemainingSeconds(supabase, user.id) : 0;
+
   let generationResult: GenerationOutcome | null = null;
 
-  if (autoGenerate) {
+  if (autoGenerate && cooldownWait === 0) {
     const maxSlides = await getMaxSlides(supabase, user.id);
     const { data: presentation } = await supabase
       .from("presentations")
@@ -221,7 +225,14 @@ export async function uploadDocument(formData: FormData) {
       .single();
 
     if (presentation) {
-      generationResult = await runGeneration(supabase, presentation.id, doc.id, template, maxSlides);
+      generationResult = await runGeneration(
+        supabase,
+        user.id,
+        presentation.id,
+        doc.id,
+        template,
+        maxSlides,
+      );
     }
   }
 
@@ -231,6 +242,14 @@ export async function uploadDocument(formData: FormData) {
 
   if (generationResult?.status === "limit") {
     popupRedirect("/dashboard/documents", generationResult.message);
+  }
+
+  if (cooldownWait > 0) {
+    popupRedirect(
+      "/dashboard/documents",
+      `Document uploaded. Please wait ${formatWait(cooldownWait)} before generating — this cooldown keeps us under the AI provider's rate limit. You can convert it from Documents once the wait is over.`,
+      "Please wait",
+    );
   }
 
   const message =
