@@ -17,6 +17,54 @@ const EXT_TO_TYPE: Record<string, DocumentFileType> = {
   txt: "txt",
 };
 
+// Cooldown between generations, to stay under the AI provider's rate limit.
+// A clean run earns a longer breather; a failure (error or quota hit) waits
+// less so the user can retry sooner.
+const SUCCESS_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes after a successful deck
+const FAILURE_COOLDOWN_MS = 1 * 60 * 1000; // 1 minute after an error / limit
+
+/** Human-friendly wait, e.g. "1m 30s" or "45s". */
+function formatWait(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+/**
+ * Seconds left on the user's generation cooldown, or 0 if they're clear to
+ * generate. Read straight off the profile so it's cheap to check on every
+ * entry point.
+ */
+async function cooldownRemainingSeconds(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<number> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("generation_cooldown_until")
+    .eq("id", userId)
+    .single();
+
+  const until = data?.generation_cooldown_until
+    ? new Date(data.generation_cooldown_until as string).getTime()
+    : 0;
+  const remainingMs = until - Date.now();
+  return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0;
+}
+
+/** Stamps the next-allowed time after a generation finishes. */
+async function stampCooldown(
+  supabase: SupabaseClient,
+  userId: string,
+  status: GenerationOutcome["status"],
+): Promise<void> {
+  const ms = status === "done" ? SUCCESS_COOLDOWN_MS : FAILURE_COOLDOWN_MS;
+  await supabase
+    .from("profiles")
+    .update({ generation_cooldown_until: new Date(Date.now() + ms).toISOString() })
+    .eq("id", userId);
+}
+
 async function requireUser(supabase: SupabaseClient): Promise<User> {
   const {
     data: { user },
@@ -30,8 +78,10 @@ function toastRedirect(path: string, message: string): never {
 }
 
 /** Like toastRedirect, but the message is shown as a blocking popup instead of a toast. */
-function popupRedirect(path: string, message: string): never {
-  redirect(`${path}?popup=${encodeURIComponent(message)}`);
+function popupRedirect(path: string, message: string, title?: string): never {
+  const params = new URLSearchParams({ popup: message });
+  if (title) params.set("popupTitle", title);
+  redirect(`${path}?${params.toString()}`);
 }
 
 /** Slide count is capped by plan, not chosen by the user. */
@@ -49,6 +99,7 @@ async function getMaxSlides(supabase: SupabaseClient, userId: string): Promise<n
  */
 async function runGeneration(
   supabase: SupabaseClient,
+  userId: string,
   presentationId: string,
   documentId: string,
   template: string,
@@ -89,6 +140,7 @@ async function runGeneration(
       })
       .eq("id", presentationId);
 
+    await stampCooldown(supabase, userId, "done");
     return { status: "done" };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Generation failed";
@@ -98,7 +150,9 @@ async function runGeneration(
       .update({ status: "error", error_message: message })
       .eq("id", presentationId);
 
-    return { status: err instanceof GenerationLimitError ? "limit" : "error", message };
+    const status = err instanceof GenerationLimitError ? "limit" : "error";
+    await stampCooldown(supabase, userId, status);
+    return { status, message };
   }
 }
 
@@ -149,9 +203,13 @@ export async function uploadDocument(formData: FormData) {
   const autoGenerate = formData.get("autoGenerate") === "on";
   const template = (formData.get("template") as string) || "corporate";
 
+  // A cooldown blocks auto-generation, but the upload itself still succeeds —
+  // we just skip the generation and tell the user how long to wait.
+  const cooldownWait = autoGenerate ? await cooldownRemainingSeconds(supabase, user.id) : 0;
+
   let generationResult: GenerationOutcome | null = null;
 
-  if (autoGenerate) {
+  if (autoGenerate && cooldownWait === 0) {
     const maxSlides = await getMaxSlides(supabase, user.id);
     const { data: presentation } = await supabase
       .from("presentations")
@@ -167,7 +225,14 @@ export async function uploadDocument(formData: FormData) {
       .single();
 
     if (presentation) {
-      generationResult = await runGeneration(supabase, presentation.id, doc.id, template, maxSlides);
+      generationResult = await runGeneration(
+        supabase,
+        user.id,
+        presentation.id,
+        doc.id,
+        template,
+        maxSlides,
+      );
     }
   }
 
@@ -177,6 +242,14 @@ export async function uploadDocument(formData: FormData) {
 
   if (generationResult?.status === "limit") {
     popupRedirect("/dashboard/documents", generationResult.message);
+  }
+
+  if (cooldownWait > 0) {
+    popupRedirect(
+      "/dashboard/documents",
+      `Document uploaded. Please wait ${formatWait(cooldownWait)} before generating — this cooldown keeps us under the AI provider's rate limit. You can convert it from Documents once the wait is over.`,
+      "Please wait",
+    );
   }
 
   const message =
@@ -205,6 +278,15 @@ export async function convertDocument(formData: FormData) {
 
   if (!doc) toastRedirect("/dashboard/documents", "Document not found");
 
+  const wait = await cooldownRemainingSeconds(supabase, user.id);
+  if (wait > 0) {
+    popupRedirect(
+      "/dashboard/documents",
+      `Please wait ${formatWait(wait)} before generating another presentation. This cooldown keeps us under the AI provider's rate limit.`,
+      "Please wait",
+    );
+  }
+
   const planMax = await getMaxSlides(supabase, user.id);
   const requested = parseInt((formData.get("slideCount") as string) || "0", 10);
   const maxSlides = requested > 0 ? Math.min(requested, planMax) : planMax;
@@ -223,7 +305,7 @@ export async function convertDocument(formData: FormData) {
     .single();
 
   const result: GenerationOutcome = presentation
-    ? await runGeneration(supabase, presentation.id, documentId, template, maxSlides)
+    ? await runGeneration(supabase, user.id, presentation.id, documentId, template, maxSlides)
     : { status: "error", message: "Could not create the presentation record" };
 
   revalidatePath("/dashboard/presentations");
@@ -281,6 +363,15 @@ export async function retryPresentation(formData: FormData) {
   const user = await requireUser(supabase);
   const id = formData.get("id") as string;
 
+  const wait = await cooldownRemainingSeconds(supabase, user.id);
+  if (wait > 0) {
+    popupRedirect(
+      "/dashboard/presentations",
+      `Please wait ${formatWait(wait)} before generating another presentation. This cooldown keeps us under the AI provider's rate limit.`,
+      "Please wait",
+    );
+  }
+
   const { data: presentation } = await supabase
     .from("presentations")
     .update({ status: "queued", error_message: null, slide_count: 0, completed_at: null })
@@ -292,6 +383,7 @@ export async function retryPresentation(formData: FormData) {
   const result: GenerationOutcome = presentation?.document_id
     ? await runGeneration(
         supabase,
+        user.id,
         presentation.id,
         presentation.document_id,
         presentation.template,
